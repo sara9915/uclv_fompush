@@ -48,7 +48,7 @@ Push::Push(char* Q_cost, char* Abar_str, char* Ain, char* bin, char* Aeq, char* 
 	b = 0.09;
 	A = a*b;
 	g = 9.81;
-	h = 0.01; // Think about this!
+	h = 1.f/250; // Think about this!
 
 	_Q_cost = Q_cost;
 	_Ain = Ain;
@@ -616,7 +616,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	const double b = 0.09;
 	const double A = a*b;
 	const double g = 9.81;
-	const double h = 0.01; // Think about this!
+	const double h = 1.f/250; // Think about this!
 
 	MatrixXd M_inv(3,3);
 	MatrixXd Cbi(3,3);
