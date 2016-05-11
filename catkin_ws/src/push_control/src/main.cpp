@@ -25,7 +25,12 @@
 #include "tf/LinearMath/Transform.h"
 
 #include <ros/ros.h>
+#include "tf/tf.h"
+#include <tf/transform_datatypes.h>
+#include <tf/transform_listener.h>
+#include "geometry_msgs/Twist.h"
 using namespace abb::egm;
+using namespace tf;
 
 //
 using namespace std;
@@ -276,7 +281,8 @@ main(int   argc,
 {
     ros::init(argc, argv, "push_control");
     ros::NodeHandle n;
-    ros::Subscriber sub = n.subscribe("/tf", 1, tfCallback);
+    tf::TransformListener listener;
+    //ros::Subscriber sub = n.subscribe("/tf", 1, tfCallback);
 
 	// Declare Matrix variables
 	MatrixXd q_pusher(2,1);
@@ -355,7 +361,7 @@ main(int   argc,
 
     // Create socket and wait for robot's connection
     UDPSocket* EGMsock;
-    int n = 0, len=0;
+    int len=0;
     const int MAX_BUFFER = 1400;
     const int portNumber = 6510;
     char buffer[MAX_BUFFER];
@@ -433,7 +439,7 @@ main(int   argc,
         }
         
         // deserialize inbound message
-        pRobotMessage->ParseFromArray(buffer, n);
+        pRobotMessage->ParseFromArray(buffer, recvMsgSize);
         DisplayRobotMessage(pRobotMessage, robot_x, robot_y, robot_z); //Assign tcp position of robot to robot_x, robot_y, robot_z
         break;
       } catch (SocketException &e) {
@@ -448,19 +454,19 @@ main(int   argc,
         
     	pthread_mutex_lock(&nonBlockMutex);
     	//Read Position from Vicon
-        geometry_msgs::Transform obj_pose;
+        tf::StampedTransform obj_pose;
     	Target << 1,0;
-        Transformer::lookupTransform("vicon/StainlessSteel/StainlessSteel", "map", ros::Time::now()-ros::Duration(0.01), obj_pose);
-        tf::Quaternion q(obj_pose.transform.rotation.x, obj_pose.transform.rotation.y, obj_pose.transform.rotation.z, obj_pose.transform.rotation.w);
+        listener.lookupTransform("vicon/StainlessSteel/StainlessSteel", "map", ros::Time::now()-ros::Duration(0.01), obj_pose);
+        tf::Quaternion q = obj_pose.getRotation();
         tf::Matrix3x3 m(q);
         double roll, pitch, yaw;
         m.getRPY(roll, pitch, yaw);
-        q_slider << obj_pose.x, obj_pose.y, yaw;
+        q_slider << obj_pose.getOrigin().getX(), obj_pose.getOrigin().getY(), yaw;
         
         geometry_msgs::Twist obj_twist;
-        Transformer::lookupTwist("vicon/StainlessSteel/StainlessSteel", "vicon/StainlessSteel/StainlessSteel", ros::Time::now()-ros::Duration(0.01), ros::Duration(0.005), obj_twist);
+        listener.lookupTwist("vicon/StainlessSteel/StainlessSteel", "vicon/StainlessSteel/StainlessSteel", ros::Time::now()-ros::Duration(0.01), ros::Duration(0.005), obj_twist);
         
-    	dq_slider << obj_twist.linear.x, obj_twist.linear.y, vel_msg.angular.z;
+    	dq_slider << obj_twist.linear.x, obj_twist.linear.y, obj_twist.angular.z;
 
     	if (i==0){usleep(1e6);}
 
