@@ -14,6 +14,21 @@ function ask {
     fi
 }
 
+if [ "$#" == 0 ] || [ "$1" == "PROTOBUF" ]; then
+    mkdir -p $HOME/software
+    cd $HOME/software
+    git clone https://github.com/google/protobuf.git
+    cd protobuf
+    ./autogen.sh
+    ./configure
+    make
+    make check
+    sudo make install
+    sudo ldconfig
+    #protoc --cpp_out=. egm.proto
+fi
+
+
 if [ "$#" == 0 ] || [ "$1" == "APT" ]; then
     echo "Install useful packages from apt-get"
     sudo apt-get update

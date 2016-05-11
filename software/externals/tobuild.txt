@@ -3,8 +3,5 @@
 
 lcm-pod
 libbot
-eigen-pod
-bullet-pod
-snopt
-drake
+
 
