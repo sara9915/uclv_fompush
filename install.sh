@@ -28,6 +28,11 @@ if [ "$#" == 0 ] || [ "$1" == "PROTOBUF" ]; then
     #protoc --cpp_out=. egm.proto
 fi
 
+if [ "$#" == 0 ] || [ "$1" == "VICON" ]; then
+    git submodule update --init $HOME/cpush/catkin_ws/src/vicon_bridge
+    cd $HOME/cpush/catkin_ws
+    catkin_make
+fi
 
 if [ "$#" == 0 ] || [ "$1" == "APT" ]; then
     echo "Install useful packages from apt-get"
