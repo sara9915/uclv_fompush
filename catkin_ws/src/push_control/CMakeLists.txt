@@ -21,16 +21,19 @@ find_package(catkin REQUIRED COMPONENTS
 #find_package(gurobi65)
 # hack
 set(GUROBI_HOME "$ENV{HOME}/software/gurobi651/linux64")
-set(GUROBI_INCLUDE_DIR "${GUROBI_HOME}/include")
+set(GUROBI_HOME2 "$ENV{HOME}/gurobi651/linux64")
+set(GUROBI_INCLUDE_DIR "${GUROBI_HOME}/include;${GUROBI_HOME2}/include")
 set(EIGEN_INCLUDE_DIR "/usr/include/eigen3")
 find_library( GUROBI_LIBRARY 
               NAMES gurobi65
               PATHS "${GUROBI_HOME}/lib" 
+                    "${GUROBI_HOME2}/lib"
               )
 
 find_library( GUROBI_CXX_LIBRARY 
               NAMES gurobi_c++
               PATHS "${GUROBI_HOME}/lib" 
+                    "${GUROBI_HOME2}/lib"
               )
 find_package(Protobuf REQUIRED)
               
