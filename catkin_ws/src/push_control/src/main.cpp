@@ -46,11 +46,11 @@ pthread_mutex_t nonBlockMutex;
 
 // Define structure to send arguments to thread
 typedef struct thread_data{
-	MatrixXd  *_q_pusher;
-	MatrixXd  *_q_slider;
-	MatrixXd  *_dq_slider;
-	MatrixXd  *_Target;
-	MatrixXd  *_u_control;
+    MatrixXd  *_q_pusher;
+    MatrixXd  *_q_slider;
+    MatrixXd  *_dq_slider;
+    MatrixXd  *_Target;
+    MatrixXd  *_u_control;
 
 } tdata_t;
 
@@ -62,124 +62,124 @@ struct thread_data thread_data_array[1];
 void *rriMain(void *thread_arg)
 {
 
-	struct thread_data *my_data;
-	my_data = (struct thread_data *) thread_arg;
+    struct thread_data *my_data;
+    my_data = (struct thread_data *) thread_arg;
 
-	//Define variables from argument pointers
-	pthread_mutex_lock(&nonBlockMutex);
-	MatrixXd *pq_slider = my_data->_q_slider;
-	MatrixXd *pdq_slider= my_data->_dq_slider;
-	MatrixXd *pq_pusher = my_data->_q_pusher;
-	MatrixXd *pTarget = my_data->_Target;
-	MatrixXd *pu_control = my_data->_u_control;
+    //Define variables from argument pointers
+    pthread_mutex_lock(&nonBlockMutex);
+    MatrixXd *pq_slider = my_data->_q_slider;
+    MatrixXd *pdq_slider= my_data->_dq_slider;
+    MatrixXd *pq_pusher = my_data->_q_pusher;
+    MatrixXd *pTarget = my_data->_Target;
+    MatrixXd *pu_control = my_data->_u_control;
 
-	MatrixXd &q_slider = *pq_slider;
-	MatrixXd &dq_slider = *pdq_slider;
-	MatrixXd &q_pusher = *pq_pusher;
-	MatrixXd &Target = *pTarget;
-	MatrixXd &u_control = *pu_control;
-	pthread_mutex_unlock(&nonBlockMutex);
+    MatrixXd &q_slider = *pq_slider;
+    MatrixXd &dq_slider = *pdq_slider;
+    MatrixXd &q_pusher = *pq_pusher;
+    MatrixXd &Target = *pTarget;
+    MatrixXd &u_control = *pu_control;
+    pthread_mutex_unlock(&nonBlockMutex);
 
-	//Define local variables
-	double fval1;
-	double fval2;
-	double fval3;
-	double t_init;
-	double T_des, delta_t, t_ini;
-	double step_size = 1.f/100;
-	int minIndex, maxCol;
-	float min;
+    //Define local variables
+    double fval1;
+    double fval2;
+    double fval3;
+    double t_init;
+    double T_des, delta_t, t_ini;
+    double step_size = 1.f/100;
+    int minIndex, maxCol;
+    float min;
 
-	//Define local matrix variables
-	MatrixXd fval(3,1);
-	MatrixXd _q_slider_(3,1);
-	MatrixXd _dq_slider_(3,1);
-	MatrixXd _q_pusher_(2,1);
-	MatrixXd _Target_(2,1);
+    //Define local matrix variables
+    MatrixXd fval(3,1);
+    MatrixXd _q_slider_(3,1);
+    MatrixXd _dq_slider_(3,1);
+    MatrixXd _q_pusher_(2,1);
+    MatrixXd _Target_(2,1);
 
-	//Define text file string variables
-	char Q_str[] = "H.txt";
-	char Abar_str[] = "A_bar.txt";
-	char Ain_stick_str[] = "Ain_stick.txt";
-	char bin_stick_str[] = "bin_stick.txt";
-	char Aeq_stick_str[] = "Aeq_stick.txt";
-	char beq_stick_str[] = "beq_stick.txt";
-	char Ain_up_str[]    = "Ain_up.txt";
-	char bin_up_str[]    = "bin_up.txt";
-	char Aeq_up_str[]    = "Aeq_up.txt";
-	char beq_up_str[]   = "beq_up.txt";
-	char Ain_down_str[] = "Ain_down.txt";
-	char bin_down_str[] = "bin_down.txt";
-	char Aeq_down_str[] = "Aeq_down.txt";
-	char beq_down_str[] = "beq_down.txt";
+    //Define text file string variables
+    char Q_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/H.txt";
+    char Abar_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/A_bar.txt";
+    char Ain_stick_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/Ain_stick.txt";
+    char bin_stick_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/bin_stick.txt";
+    char Aeq_stick_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/Aeq_stick.txt";
+    char beq_stick_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/beq_stick.txt";
+    char Ain_up_str[]    = "/home/mcube/cpush/catkin_ws/src/push_control/data/Ain_up.txt";
+    char bin_up_str[]    = "/home/mcube/cpush/catkin_ws/src/push_control/data/bin_up.txt";
+    char Aeq_up_str[]    = "/home/mcube/cpush/catkin_ws/src/push_control/data/Aeq_up.txt";
+    char beq_up_str[]   = "/home/mcube/cpush/catkin_ws/src/push_control/data/beq_up.txt";
+    char Ain_down_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/Ain_down.txt";
+    char bin_down_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/bin_down.txt";
+    char Aeq_down_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/Aeq_down.txt";
+    char beq_down_str[] = "/home/mcube/cpush/catkin_ws/src/push_control/data/beq_down.txt";
 
 
-	//Define object for 3 family of modes
-	Push * pStick;
-	Push * pUp;
-	Push * pDown;
+    //Define object for 3 family of modes
+    Push * pStick;
+    Push * pUp;
+    Push * pDown;
 
-	pStick = new Push (Q_str, Abar_str, Ain_stick_str, bin_stick_str, Aeq_stick_str, beq_stick_str);
-	pUp    = new Push (Q_str, Abar_str, Ain_up_str, bin_up_str, Aeq_up_str, beq_up_str);
-	pDown  = new Push (Q_str, Abar_str, Ain_down_str, bin_down_str, Aeq_down_str, beq_down_str);
+    pStick = new Push (Q_str, Abar_str, Ain_stick_str, bin_stick_str, Aeq_stick_str, beq_stick_str);
+    pUp    = new Push (Q_str, Abar_str, Ain_up_str, bin_up_str, Aeq_up_str, beq_up_str);
+    pDown  = new Push (Q_str, Abar_str, Ain_down_str, bin_down_str, Aeq_down_str, beq_down_str);
 
-	Push &Stick = *pStick;
-	Push &Up = *pUp;
-	Push &Down = *pDown;
+    Push &Stick = *pStick;
+    Push &Up = *pUp;
+    Push &Down = *pDown;
 
-	//Build optimization models
-	Stick.build_model();
-	Up.build_model();
-	Down.build_model();
+    //Build optimization models
+    Stick.build_model();
+    Up.build_model();
+    Down.build_model();
 
-	//**********************************************************************
-	//************************ Begin Loop **********************************
-	//**********************************************************************
-	double time = 0;
-	double counter = 0;
+    //**********************************************************************
+    //************************ Begin Loop **********************************
+    //**********************************************************************
+    double time = 0;
+    double counter = 0;
 
-	cout<<  "Thread Loop Start"<< endl;
+    cout<<  "Thread Loop Start"<< endl;
 
-	while(time<5)
-		{
-		if (time==0){t_ini = gettime();}
-		time = gettime()- t_ini;
-//		T_des = counter*step_size;
-//		delta_t = (T_des - time)*1e6;
-//		if (delta_t > 0){usleep(delta_t);}
+    while(time<5)
+        {
+        if (time==0){t_ini = gettime();}
+        time = gettime()- t_ini;
+//      T_des = counter*step_size;
+//      delta_t = (T_des - time)*1e6;
+//      if (delta_t > 0){usleep(delta_t);}
 
-		//Read state of robot and object from shared variables
-		pthread_mutex_lock(&nonBlockMutex);
-		_q_slider_ = q_slider;
-		_dq_slider_= dq_slider;
-		_q_pusher_= q_pusher;
-		_Target_= Target;
-		pthread_mutex_unlock(&nonBlockMutex);
+        //Read state of robot and object from shared variables
+        pthread_mutex_lock(&nonBlockMutex);
+        _q_slider_ = q_slider;
+        _dq_slider_= dq_slider;
+        _q_pusher_= q_pusher;
+        _Target_= Target;
+        pthread_mutex_unlock(&nonBlockMutex);
 
-		//Update and solve optimization models
-		Stick.update_model(_q_slider_, _dq_slider_, _q_pusher_,_Target_);
-		Up.update_model(_q_slider_, _dq_slider_, _q_pusher_,_Target_);
-		Down.update_model(_q_slider_, _dq_slider_, _q_pusher_,_Target_);
+        //Update and solve optimization models
+        Stick.update_model(_q_slider_, _dq_slider_, _q_pusher_,_Target_);
+        Up.update_model(_q_slider_, _dq_slider_, _q_pusher_,_Target_);
+        Down.update_model(_q_slider_, _dq_slider_, _q_pusher_,_Target_);
 
-		fval1 = Stick.optimize();
-		fval2 = Up.optimize();
-		fval3 = Down.optimize();
+        fval1 = Stick.optimize();
+        fval2 = Up.optimize();
+        fval3 = Down.optimize();
 
-		//Find optimial control input
-		fval << fval1, fval2, fval3;
-		min = fval.minCoeff(&minIndex, &maxCol); //Find
+        //Find optimial control input
+        fval << fval1, fval2, fval3;
+        min = fval.minCoeff(&minIndex, &maxCol); //Find
 
-		//Assign new control input to shared variables
-		pthread_mutex_lock(&nonBlockMutex);
-		if (minIndex==0){u_control = Stick.delta_u;}
-		else if (minIndex==1){	u_control = Up.delta_u;}
-		else{	u_control = Down.delta_u;}
-		pthread_mutex_unlock(&nonBlockMutex);
+        //Assign new control input to shared variables
+        pthread_mutex_lock(&nonBlockMutex);
+        if (minIndex==0){u_control = Stick.delta_u;}
+        else if (minIndex==1){  u_control = Up.delta_u;}
+        else{   u_control = Down.delta_u;}
+        pthread_mutex_unlock(&nonBlockMutex);
 
-		counter++;
+        counter++;
 
-		}
-	//*********** End Loop **************************************************
+        }
+    //*********** End Loop **************************************************
     pthread_exit((void*) 0);
 }
 
@@ -207,11 +207,19 @@ void CreateSensorMessage(EgmSensor* pSensorMessage, float x, float y)
     pSensorMessage->set_allocated_header(header);
 
     EgmCartesian *pc = new EgmCartesian();
-    float z = 0.250;
+    //float z = 0.221;  //pu
+    float z = 0.230;  //plywood
+    // x = 0.4;
+    // y = -0.03;
+    // z = 0.25;
+    if(x > 0.5) x = 0.5;
+    if(x < 0.3) x = 0.3;
+    if(y > 0.1) y = 0.1;
+    if(y < -0.1) y = -0.1;
     pc->set_x((0.6-z)*1000);    // convert to robot representation mm
     pc->set_y(y*1000);          
     pc->set_z(x*1000);
-    printf("%f %f\n", x, y);
+    printf("%f %f %f\n", x, y, z);
 
     EgmQuaternion *pq = new EgmQuaternion();
     pq->set_u0(0);   // need to fill in 
@@ -229,19 +237,32 @@ void CreateSensorMessage(EgmSensor* pSensorMessage, float x, float y)
     pSensorMessage->set_allocated_planned(planned);
 }
 
+void CreateSensorMessageEmpty(EgmSensor* pSensorMessage)
+{ 
+    static unsigned int sequenceNumber = 0;
+    EgmHeader* header = new EgmHeader();
+    header->set_mtype(EgmHeader_MessageType_MSGTYPE_CORRECTION);
+    header->set_seqno(sequenceNumber++);
+    header->set_tm(GetTickCount());
+
+    pSensorMessage->set_allocated_header(header);
+
+}
+
+
 void DisplayRobotMessage(EgmRobot *pRobotMessage, double& x, double& y, double& z)
 {
     double x_robot, y_robot, z_robot;
     if (pRobotMessage->has_header() && pRobotMessage->header().has_seqno() && pRobotMessage->header().has_tm() && pRobotMessage->header().has_mtype()  )
     {
-        printf("SeqNo=%d Tm=%u Type=%d\n", pRobotMessage->header().seqno(), pRobotMessage->header().tm(), pRobotMessage->header().mtype());
-	x_robot =  pRobotMessage->feedback().cartesian().pos().x();
-	y_robot =  pRobotMessage->feedback().cartesian().pos().y();
-	z_robot =  pRobotMessage->feedback().cartesian().pos().z();
-	
-	x = z_robot / 1000;
-	y = y_robot / 1000;
-	z = 0.6-x_robot /1000; 
+        //printf("SeqNo=%d Tm=%u Type=%d\n", pRobotMessage->header().seqno(), pRobotMessage->header().tm(), pRobotMessage->header().mtype());
+    x_robot =  pRobotMessage->feedback().cartesian().pos().x();
+    y_robot =  pRobotMessage->feedback().cartesian().pos().y();
+    z_robot =  pRobotMessage->feedback().cartesian().pos().z();
+    
+    x = x_robot / 1000;
+    y = y_robot / 1000;
+    z = z_robot /1000; 
     }
     else
     {
@@ -272,263 +293,270 @@ void DisplayRobotMessage(EgmRobot *pRobotMessage, double& x, double& y, double& 
     // }
 // }
 
+bool getRobotPose(UDPSocket* EGMsock, string& sourceAddress, unsigned short& sourcePort, EgmRobot* pRobotMessage, double& robot_x, double& robot_y, double& robot_z){
+    int recvMsgSize;
+    const int MAX_BUFFER = 1400;
+    char buffer[MAX_BUFFER];
+    try{
+        recvMsgSize = EGMsock->recvFrom(buffer, MAX_BUFFER-1, sourceAddress, sourcePort);
+        if (recvMsgSize < 0)
+        {
+            printf("Error receive message\n");
+        }
+        else {
+            //printf("Received %d\n", recvMsgSize);
+        }
+
+        // deserialize inbound message
+        pRobotMessage->ParseFromArray(buffer, recvMsgSize);
+        DisplayRobotMessage(pRobotMessage, robot_x, robot_y, robot_z); //Assign tcp position of robot to robot_x, robot_y, robot_z
+        return true;
+    } catch (SocketException &e) {}
+    
+    return false;
+}
+
+bool getViconPose(MatrixXd& q_slider, TransformListener& listener){
+    tf::StampedTransform obj_pose;
+    try{
+        listener.lookupTransform("map", "vicon/StainlessSteel/StainlessSteel", ros::Time::now()-ros::Duration(0.01), obj_pose);
+        tf::Quaternion q = obj_pose.getRotation();
+        tf::Matrix3x3 m(q);
+        double roll, pitch, yaw;
+        m.getRPY(roll, pitch, yaw);
+        q_slider << obj_pose.getOrigin().getX(), obj_pose.getOrigin().getY(), yaw;
+        return true;
+    }
+    catch (tf::TransformException ex){
+       //ROS_ERROR("%s",ex.what());
+    }
+    return false;
+}
+
+bool getViconVel(MatrixXd& dq_slider, TransformListener& listener){
+    geometry_msgs::Twist obj_twist;
+    try{
+        listener.lookupTwist("map", "vicon/StainlessSteel/StainlessSteel", ros::Time::now()-ros::Duration(0.01), ros::Duration(0.005), obj_twist);
+        dq_slider << obj_twist.linear.x, obj_twist.linear.y, obj_twist.angular.z;
+        return true;
+    }
+    catch (tf::TransformException ex){
+        //ROS_ERROR("%s",ex.what());
+    }
+    return false;
+}
+
 //********************************************************************
 // Main Program
 //********************************************************************
 int
-main(int   argc,
-		char *argv[])
+main(int argc,  char *argv[])
 {
     ros::init(argc, argv, "push_control");
     ros::NodeHandle n;
     tf::TransformListener listener;
     //ros::Subscriber sub = n.subscribe("/tf", 1, tfCallback);
 
-	// Declare Matrix variables
-	MatrixXd q_pusher(2,1);
-	MatrixXd dq_pusher(2,1);
-	MatrixXd q_slider(3,1);
-	MatrixXd dq_slider(3,1);
-	MatrixXd r_cb_b(2,1);
-	MatrixXd Cbi(3,3);
-	MatrixXd Cbi_T(3,3);
-	MatrixXd Target(2,1);
-	MatrixXd u_control(4,1);
-	MatrixXd vp(2,1);
-	MatrixXd _q_slider_(3,1);
-	MatrixXd _dq_slider_(3,1);
-	MatrixXd smoothed_dq_slider(3,1);
-	MatrixXd _q_pusher_(2,1);
-	MatrixXd _Target_(2,1);
-	MatrixXd _u_control_(4,1);
+    // Declare Matrix variables
+    MatrixXd q_pusher(2,1);
+    MatrixXd dq_pusher(2,1);
+    MatrixXd q_slider(3,1);
+    MatrixXd dq_slider(3,1);
+    MatrixXd r_cb_b(2,1);
+    MatrixXd Cbi(3,3);
+    MatrixXd Cbi_T(3,3);
+    MatrixXd Target(2,1);
+    MatrixXd u_control(4,1);
+    MatrixXd vp(2,1);
+    MatrixXd _q_slider_(3,1);
+    MatrixXd _dq_slider_(3,1);
+    MatrixXd smoothed_dq_slider(3,1);
+    MatrixXd _q_pusher_(2,1);
+    MatrixXd _Target_(2,1);
+    MatrixXd _u_control_(4,1);
 
-	//Define physical parameters
-	const double a = 0.09;
-	double psi, theta;
-	double minIndex, maxCol;
-	double dX, dY;
-	double fval1, fval2, fval3;
-	double t_init;
-	double time;
-	double T_des, delta_t, t_ini;
-	double step_size = 1.f/250;
-	double xp, yp, zp;
-	double x_tcp, y_tcp, z_tcp;
-	double tcp_width = 4.75f/1000;
-	double robot_x, robot_y, robot_z;
+    //Define physical parameters
+    const double a = 0.09;
+    double psi, theta;
+    double minIndex, maxCol;
+    double dX, dY;
+    double fval1, fval2, fval3;
+    double t_init;
+    double time;
+    double T_des, delta_t, t_ini;
+    double step_size = 1.f/250;
+    double xp, yp, zp;
+    double x_tcp, y_tcp, z_tcp;
+    double tcp_width = 4.75f/1000;
+    bool has_robot = false;
+    bool has_vicon_pos = false;
+    bool has_vicon_vel = false;
 
-	//****************************************************************
-	//************** Create Thread ****************************
-	//****************************************************************
-	//Define Mutex
-	pthread_mutex_t nonBlockMutex;
-	pthread_mutex_init(&nonBlockMutex, NULL);
+    //****************************************************************
+    //************** Create Thread ****************************
+    //****************************************************************
+    //Define Mutex
+    pthread_mutex_t nonBlockMutex;
+    pthread_mutex_init(&nonBlockMutex, NULL);
 
-	//Define Thread
-	pthread_t rriThread;
-	pthread_attr_t attrR;
-	pthread_attr_init(&attrR);
-	pthread_attr_setdetachstate(&attrR, PTHREAD_CREATE_JOINABLE);
+    //Define Thread
+    pthread_t rriThread;
+    pthread_attr_t attrR;
+    pthread_attr_init(&attrR);
+    pthread_attr_setdetachstate(&attrR, PTHREAD_CREATE_JOINABLE);
 
-	//Assign arguments to pass to thread
-	thread_data_array[0]._q_pusher = &q_pusher;
-	thread_data_array[0]._q_slider = &q_slider;
-	thread_data_array[0]._dq_slider = &dq_slider;
-	thread_data_array[0]._Target = &Target;
-	thread_data_array[0]._u_control = &u_control;
-
-	//Read Vicon and Initialize Variables
-	q_slider << 0.19975,0.0,0*M_PI/180;
-	dq_slider << 0.0,0.0,0;
-	theta = q_slider(2);
-	x_tcp = 0.15;
-	y_tcp = 0;
-	z_tcp = 0.05;
-
-	Target << .5,0;
-	q_pusher(0) = x_tcp + tcp_width*cos(theta);
-	q_pusher(1) = y_tcp - tcp_width*sin(theta);
-
-	//Create Thread
-	pthread_create(&rriThread, &attrR, rriMain, (void*) &thread_data_array[0]) ;
-
-	usleep(1e6);
-	//****************************************************************
-
-	//****************************************************************
-	//************** Main Control Loop ****************************
-	//****************************************************************
-
+    //Assign arguments to pass to thread
+    thread_data_array[0]._q_pusher = &q_pusher;
+    thread_data_array[0]._q_slider = &q_slider;
+    thread_data_array[0]._dq_slider = &dq_slider;
+    thread_data_array[0]._Target = &Target;
+    thread_data_array[0]._u_control = &u_control;
+        
     // Create socket and wait for robot's connection
     UDPSocket* EGMsock;
-    int len=0;
-    const int MAX_BUFFER = 1400;
     const int portNumber = 6510;
-    char buffer[MAX_BUFFER];
-    int recvMsgSize;
     string sourceAddress;             // Address of datagram source
     unsigned short sourcePort;        // Port of datagram source
 
     EGMsock = new UDPSocket(portNumber);
     EgmSensor *pSensorMessage = new EgmSensor();
-    
+    EgmRobot *pRobotMessage = new EgmRobot();
     string messageBuffer;
     
-    unsigned int tmp = 0;
-    EgmRobot *pRobotMessage = new EgmRobot();
-   /* while(true){
-      try{
-        recvMsgSize = EGMsock->recvFrom(buffer, MAX_BUFFER-1, sourceAddress, sourcePort);
-        if (recvMsgSize < 0)
-        {
-            printf("Error receive message\n");
-            continue;
-        }
-        else {
-            printf("Received %d\n", recvMsgSize);
-        }
-        
-        // deserialize inbound message
-        EgmRobot *pRobotMessage = new EgmRobot();
-        pRobotMessage->ParseFromArray(buffer, n);
-        DisplayRobotMessage(pRobotMessage);
-        delete pRobotMessage;
-        
-        EgmSensor *pSensorMessage = new EgmSensor();
-        CreateSensorMessage(pSensorMessage, 1, 1);
-        pSensorMessage->SerializeToString(&messageBuffer);
-
-        // send a message to the robot
-        EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
-        printf("Sent %lu\n", messageBuffer.length());
-        delete pSensorMessage;
-	* 
-        usleep(1000);
-      } catch (SocketException &e) {
-        tmp ++;
-        if(tmp % 10000 == 9999){
-           tmp = 0;
-           printf(".");
-        }
-        // no data
-      }
-    }*/
-
-    for (int i=0;i<1000;i++){
-
-    	if (i==0){t_ini = gettime();
-    	}
-    	//Get time and set frequency of loop to 250 Hz
-    	time = gettime()- t_ini;
-    	T_des = i*step_size;
-    	delta_t = T_des - time;
-    	delta_t = delta_t*1e6;
-    	if (delta_t > 0){usleep(delta_t);}
-
-    	//**********************  Get State of robot and object from ROS *********************************
-	while(true){
-      try{
-        recvMsgSize = EGMsock->recvFrom(buffer, MAX_BUFFER-1, sourceAddress, sourcePort);
-        if (recvMsgSize < 0)
-        {
-            printf("Error receive message\n");
-            continue;
-        }
-        else {
-            printf("Received %d\n", recvMsgSize);
-        }
-        
-        // deserialize inbound message
-        pRobotMessage->ParseFromArray(buffer, recvMsgSize);
-        DisplayRobotMessage(pRobotMessage, robot_x, robot_y, robot_z); //Assign tcp position of robot to robot_x, robot_y, robot_z
-        break;
-      } catch (SocketException &e) {
-        tmp ++;
-        if(tmp % 10000 == 9999){
-           tmp = 0;
-           printf(".");
-        }
-        // no data
-      }
-    }
-        
-    	pthread_mutex_lock(&nonBlockMutex);
-    	//Read Position from Vicon
-        tf::StampedTransform obj_pose;
-    	Target << 1,0;
-        listener.lookupTransform("vicon/StainlessSteel/StainlessSteel", "map", ros::Time::now()-ros::Duration(0.01), obj_pose);
-        tf::Quaternion q = obj_pose.getRotation();
-        tf::Matrix3x3 m(q);
-        double roll, pitch, yaw;
-        m.getRPY(roll, pitch, yaw);
-        q_slider << obj_pose.getOrigin().getX(), obj_pose.getOrigin().getY(), yaw;
-        
-        geometry_msgs::Twist obj_twist;
-        listener.lookupTwist("vicon/StainlessSteel/StainlessSteel", "vicon/StainlessSteel/StainlessSteel", ros::Time::now()-ros::Duration(0.01), ros::Duration(0.005), obj_twist);
-        
-    	dq_slider << obj_twist.linear.x, obj_twist.linear.y, obj_twist.angular.z;
-
-    	if (i==0){usleep(1e6);}
-
-    	//Kinematic Equations
-    	psi = 0;
-    	r_cb_b << -a/2, psi;
-    	theta = q_slider(2);
-    	Cbi << cos(theta), sin(theta), 0, -sin(theta), cos(theta), 0, 0, 0, 1;
-    	Cbi_T = Cbi.transpose();
-
-    	q_pusher = Cbi_T.topLeftCorner(2,2)*r_cb_b + q_slider.topLeftCorner(2,1);
-        
-	    x_tcp = robot_x;
-    	y_tcp = robot_y;
-    	z_tcp = robot_z;
-
-    	//Assign local variables
-    	_q_slider_ = q_slider;
-    	_dq_slider_ = dq_slider; //Will need to numerically differentiate this value
-    	_q_pusher_ = q_pusher;
-    	_Target_ = Target;
-    	_u_control_ = u_control;
-	
-	pthread_mutex_unlock(&nonBlockMutex);
     
-	theta = _q_slider_(2);
-
-	pthread_mutex_lock(&nonBlockMutex);
-    	Target << .5,0;
-    	q_pusher(0) = x_tcp + tcp_width*cos(theta);
-    	q_pusher(1) = y_tcp - tcp_width*sin(theta);
-
-    	pthread_mutex_unlock(&nonBlockMutex);
-    	//**********************************************************************************
-
-    	vp = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, _u_control_);
-    	xp = _q_pusher_(0);
-    	yp = _q_pusher_(1);
-
-    	if (sqrt(pow(xp-Target(0),2)+pow(yp-Target(1),2))>0.05){
-	    cout<< xp<< endl;
-    		xp=  xp + step_size*vp(0);
-    		yp=  yp + step_size*vp(1);}
-		else
-		{cout<< "Target Reached within tolerance"<<endl;}
-
-    	x_tcp = xp - tcp_width*cos(theta);
-    	y_tcp = yp - tcp_width*sin(theta);
-
-
-    	//Set Robot TCP cartesian coordinates
-	// send a message to the robot
-        CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
+    //Initialize Vicon and robot data collection
         
-	pSensorMessage->SerializeToString(&messageBuffer);
+    int tmp = 0;
+    while((!has_robot || !has_vicon_pos || !has_vicon_vel || tmp < 5000) && ros::ok())
+    //while(ros::ok())
+    {
+        tmp++;
+        //Read robot position
+        if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
+            has_robot = true;
+            //CreateSensorMessageEmpty(pSensorMessage);
+            CreateSensorMessage(pSensorMessage,0.33,-0.04);
+            pSensorMessage->SerializeToString(&messageBuffer);
+            EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
+        }
+        if(getViconPose(q_slider, listener))
+            has_vicon_pos = true;
+        if(getViconVel(dq_slider, listener))
+            has_vicon_vel = true;
+        printf("RobotPose %f %f %f\n", x_tcp, y_tcp, z_tcp);
+        printf("q_slider %f %f %f\n", q_slider(0), q_slider(1), q_slider(2));
+        printf("dq_slider %f %f %f\n", dq_slider(0), dq_slider(1), dq_slider(2));
+        
+        
+        usleep(4e3);
+    }
+    
+    
+    //Read Vicon and Initialize Variables
+    theta = q_slider(2);
+
+    Target << .5,-0.040;
+    q_pusher(0) = x_tcp + tcp_width*cos(theta);
+    q_pusher(1) = y_tcp - tcp_width*sin(theta);
+
+    //Create Thread
+    pthread_create(&rriThread, &attrR, rriMain, (void*) &thread_data_array[0]) ;
+
+    
+    for(int i=0;i<250;i++){
+        if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
+            has_robot = true;
+            CreateSensorMessageEmpty(pSensorMessage);
+            //CreateSensorMessage(pSensorMessage,0.4,-0.04);
+            pSensorMessage->SerializeToString(&messageBuffer);
+            EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
+        }
+        usleep(4e3);
+    }
+    
+    //usleep(1e6);
+    //****************************************************************
+
+    //****************************************************************
+    //************** Main Control Loop ****************************
+    //****************************************************************
+        
+        
+
+    //usleep(1e6);
+
+    for (int i=0;i<100000  && ros::ok();i++){
+
+        if (i==0){t_ini = gettime();}
+        //Get time and set frequency of loop to 250 Hz
+        time = gettime()- t_ini;
+        //printf("time:%f\n", time);
+        T_des = i*step_size;
+        delta_t = T_des - time;
+        delta_t = delta_t*1e6;
+        if (delta_t > 0){usleep(delta_t);}
+
+        //**********************  Get State of robot and object from ROS *********************************
+
+        pthread_mutex_lock(&nonBlockMutex);
+        double _x_tcp, _y_tcp, _z_tcp;
+        if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
+            printf("getRobotPose %f %f %f\n", x_tcp, y_tcp, z_tcp);
+            //pSensorMessage->SerializeToString(&messageBuffer);
+            //EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
+            
+        }
+        getViconPose(q_slider, listener);
+        getViconVel(dq_slider, listener);
+
+        pthread_mutex_unlock(&nonBlockMutex);
+        
+        theta = _q_slider_(2);
+
+        pthread_mutex_lock(&nonBlockMutex);
+        Target << .5,0;
+        q_pusher(0) = x_tcp + tcp_width*cos(theta);
+        q_pusher(1) = y_tcp + tcp_width*sin(theta);
+        
+         //Assign local variables
+        _q_slider_ = q_slider;
+        _dq_slider_ = dq_slider; //Will need to numerically differentiate this value
+        _q_pusher_ = q_pusher;
+        _Target_ = Target;
+        _u_control_ = u_control;
+
+        pthread_mutex_unlock(&nonBlockMutex);
+        //**********************************************************************************
+
+        vp = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, _u_control_);
+        xp = _q_pusher_(0);
+        yp = _q_pusher_(1);
+
+        if (sqrt(pow(xp-Target(0),2)+pow(yp-Target(1),2))>0.05){
+            xp=  xp + step_size*vp(0);
+            //xp=  xp + step_size*0.05;
+            yp=  yp + step_size*vp(1);
+            printf("vp %f %f\n", vp(0), vp(1));
+        }
+        else
+        {cout<< "Target Reached within tolerance"<<endl; }
+
+        x_tcp = xp - tcp_width*cos(theta);
+        y_tcp = yp - tcp_width*sin(theta);
+
+
+        //Set Robot TCP cartesian coordinates
+        // send a message to the robot
+        CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
+        // 
+        pSensorMessage->SerializeToString(&messageBuffer);
         EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
-        printf("Sent %lu\n", messageBuffer.length());
+        //printf("Sent %lu\n", messageBuffer.length());
 
     }
 
-	(void) pthread_join(rriThread, NULL);
-	cout<< "End of Program"<<endl;
+    (void) pthread_join(rriThread, NULL);
+    cout<< "End of Program"<<endl;
 
-	return 0;
+    return 0;
 }

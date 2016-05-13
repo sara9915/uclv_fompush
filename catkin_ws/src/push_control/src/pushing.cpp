@@ -648,6 +648,8 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 
 	w_b << 0,0,dtheta;
 	r_pb_i << xp-x,yp-y,0;
+        
+        
 
 	n << cos(theta), sin(theta), cos(theta)*(y-yp) - sin(theta)*(x-xp);
 	d1 << -sin(theta), cos(theta), -cos(theta)*(x-xp) - sin(theta)*(y-yp);
@@ -780,7 +782,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	vp(0) = vc(0);
 	vp(1) = vc(1);
 
-
+        cout<< "x" << x << "y "<<y << "xp" << xp << "yp" <<yp<< "forces" << cn<<beta1<<beta2<<dpsi<<endl;
 	return vp;
 
 
