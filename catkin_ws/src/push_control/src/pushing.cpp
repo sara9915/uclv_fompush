@@ -620,6 +620,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 
 	MatrixXd M_inv(3,3);
 	MatrixXd Cbi(3,3);
+        MatrixXd Cbi_T(3,3);
 	MatrixXd w_b(3,1);
 	MatrixXd w_i(3,1);
 	MatrixXd r_pb_b(3,1);
@@ -649,14 +650,9 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	w_b << 0,0,dtheta;
 	r_pb_i << xp-x,yp-y,0;
         
-        
-
 	n << cos(theta), sin(theta), cos(theta)*(y-yp) - sin(theta)*(x-xp);
 	d1 << -sin(theta), cos(theta), -cos(theta)*(x-xp) - sin(theta)*(y-yp);
 	d2 << sin(theta), -cos(theta), cos(theta)*(x-xp) + sin(theta)*(y-yp);
-
-
-
 
 	w_i = Cbi.transpose()*w_b;
 	r_pb_b = Cbi*r_pb_i;
@@ -664,8 +660,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 //
 //
 	Cbi << cos(theta), sin(theta), 0, -sin(theta), cos(theta), 0, 0, 0, 1;
-
-
+        Cbi_T = Cbi.transpose();
 	MatrixXd f_f(3,1);
 	MatrixXd Temp(3,2);
 	MatrixXd v_i(2,1);
@@ -760,10 +755,14 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 //
 
 	MatrixXd dq_slider_next(3,1);
+        MatrixXd q_slider_next(3,1);
+        MatrixXd contact(2,1);
+        double psi_next;
 	MatrixXd w_b_next(1,1);
 	MatrixXd Rotational_term(3,1);
 	MatrixXd dr_pb_i(3,1);
 	MatrixXd dpsi_vec(3,1);
+        MatrixXd contact_vec(2,1);
 	MatrixXd vc(3,1);
 
 	double cn   = u(0)+ 3.6155;
@@ -772,18 +771,37 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	double dpsi = u(3);
 
 	dq_slider_next = dq_slider + h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
+        q_slider_next = q_slider + h*dq_slider_next;
+        
 	w_b_next = n3*dq_slider_next(2);
 	Rotational_term = cross_op(w_b_next)*r_pb_i;
 	dpsi_vec << 0, dpsi, 0;
+        contact_vec << -a/2,psi;
 	dr_pb_i = Cbi.transpose()*dpsi_vec;
 	vc =  dq_slider_next + Rotational_term + dr_pb_i;
 
 
 	vp(0) = vc(0);
 	vp(1) = vc(1);
+        
+        double x_des;
+        double y_des;
+        
+        psi_next = psi+h*dpsi;
+        
+        Cbi_T = Cbi.transpose();
+        //q_pusher = Cbi_T.topLeftCorner(2,2)*r_cb_b + q_slider.topLeftCorner(2,1);
+        
+        contact = Cbi_T.topLeftCorner(2,2)*contact_vec + q_slider_next.topLeftCorner(2,1);
+        
+        
 
-        cout<< "x" << x << "y "<<y << "xp" << xp << "yp" <<yp<< "forces" << cn<<beta1<<beta2<<dpsi<<endl;
-	return vp;
+        cout<< " x " << x << " y "<<y << " theta "<<theta <<endl;
+        cout<< " dx " << dx << " dy "<<dy << " dtheta "<<dtheta <<endl;
+        cout<< " xp " << xp << " yp " <<yp;
+        cout<< " forces " << cn<<" "<<beta1<<" "<<beta2<<" "<<dpsi<<endl;
+        cout<< " vp_x " << vp(0) <<  " vp_y " << vp(1)<<endl;
+	return contact;
 
 
 

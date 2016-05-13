@@ -213,7 +213,7 @@ void CreateSensorMessage(EgmSensor* pSensorMessage, float x, float y)
     // y = -0.03;
     // z = 0.25;
     if(x > 0.5) x = 0.5;
-    if(x < 0.3) x = 0.3;
+    if(x < 0.15) x = 0.15;
     if(y > 0.1) y = 0.1;
     if(y < -0.1) y = -0.1;
     pc->set_x((0.6-z)*1000);    // convert to robot representation mm
@@ -435,7 +435,7 @@ main(int argc,  char *argv[])
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
             has_robot = true;
             //CreateSensorMessageEmpty(pSensorMessage);
-            CreateSensorMessage(pSensorMessage,0.33,-0.04);
+            CreateSensorMessage(pSensorMessage,0.18,-0.04);
             pSensorMessage->SerializeToString(&messageBuffer);
             EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         }
@@ -514,13 +514,12 @@ main(int argc,  char *argv[])
         theta = _q_slider_(2);
 
         pthread_mutex_lock(&nonBlockMutex);
-        Target << .5,0;
         q_pusher(0) = x_tcp + tcp_width*cos(theta);
         q_pusher(1) = y_tcp + tcp_width*sin(theta);
         
          //Assign local variables
         _q_slider_ = q_slider;
-        _dq_slider_ = dq_slider; //Will need to numerically differentiate this value
+        _dq_slider_ = dq_slider*1; //Will need to numerically differentiate this value
         _q_pusher_ = q_pusher;
         _Target_ = Target;
         _u_control_ = u_control;
@@ -533,9 +532,11 @@ main(int argc,  char *argv[])
         yp = _q_pusher_(1);
 
         if (sqrt(pow(xp-Target(0),2)+pow(yp-Target(1),2))>0.05){
-            xp=  xp + step_size*vp(0);
+            // xp=  xp + step_size*vp(0);
             //xp=  xp + step_size*0.05;
-            yp=  yp + step_size*vp(1);
+            // yp=  yp + step_size*vp(1);
+            xp = vp(0);
+            yp = vp(1);
             printf("vp %f %f\n", vp(0), vp(1));
         }
         else
