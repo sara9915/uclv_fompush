@@ -605,7 +605,7 @@ void Push::stack_arrays()
 
 //********************************************************************************
 
-MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u)
+MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double xp_des, double yp_des)
 {
 //
 	const double nu = 0.35;
@@ -636,7 +636,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 //
 	double x = q_slider(0);
 	double y = q_slider(1);
-	double theta = q_slider(2);
+	double theta = q_slider(2)*1;
 
 	double dx = dq_slider(0);
 	double dy = dq_slider(1);
@@ -644,8 +644,6 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 
 	double xp = q_pusher(0);
 	double yp = q_pusher(1);
-
-
 
 	w_b << 0,0,dtheta;
 	r_pb_i << xp-x,yp-y,0;
@@ -659,6 +657,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	double psi =r_pb_b(2);
 //
 //
+// theta=0;
 	Cbi << cos(theta), sin(theta), 0, -sin(theta), cos(theta), 0, 0, 0, 1;
         Cbi_T = Cbi.transpose();
 	MatrixXd f_f(3,1);
@@ -684,7 +683,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	double h3 = (dg-cg)/2;
 	double h4 = (dg+cg)/2;
 
-	double w1g  = 1;
+	double w1g = 1;
 	double w2g = 1;
 
 	double x1g = sqrt(1/3);
@@ -764,19 +763,22 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	MatrixXd dpsi_vec(3,1);
         MatrixXd contact_vec(2,1);
 	MatrixXd vc(3,1);
+        MatrixXd Eye(2,2);
+        Eye << 1,0,0,1;
 
-	double cn   = u(0)+ 3.6155;
-	double beta1= u(1);
-	double beta2= u(2);
-	double dpsi = u(3);
+	double cn   = u(0)*1+ 3.6155;
+	double beta1= u(1)*1;
+	double beta2= u(2)*1;
+	double dpsi = u(3)*1;
 
-	dq_slider_next = dq_slider + h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
-        q_slider_next = q_slider + h*dq_slider_next;
+        // theta=0;
+	dq_slider_next << dq_slider + h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
+        q_slider_next =q_slider + h*dq_slider_next;
         
 	w_b_next = n3*dq_slider_next(2);
 	Rotational_term = cross_op(w_b_next)*r_pb_i;
 	dpsi_vec << 0, dpsi, 0;
-        contact_vec << -a/2,psi;
+        
 	dr_pb_i = Cbi.transpose()*dpsi_vec;
 	vc =  dq_slider_next + Rotational_term + dr_pb_i;
 
@@ -784,23 +786,24 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	vp(0) = vc(0);
 	vp(1) = vc(1);
         
-        double x_des;
-        double y_des;
-        
-        psi_next = psi+h*dpsi;
+        psi_next = psi+h*dpsi*1;
+        contact_vec << xp_des, yp_des;
         
         Cbi_T = Cbi.transpose();
-        //q_pusher = Cbi_T.topLeftCorner(2,2)*r_cb_b + q_slider.topLeftCorner(2,1);
+        cout<< Cbi_T.topLeftCorner(2,2)<<endl;
         
-        contact = Cbi_T.topLeftCorner(2,2)*contact_vec + q_slider_next.topLeftCorner(2,1);
+        // contact = Cbi_T.topLeftCorner(2,2)*contact_vec + q_slider_next.topLeftCorner(2,1);
         
-        
+        contact = contact_vec + h*vp;
 
         cout<< " x " << x << " y "<<y << " theta "<<theta <<endl;
-        cout<< " dx " << dx << " dy "<<dy << " dtheta "<<dtheta <<endl;
-        cout<< " xp " << xp << " yp " <<yp;
-        cout<< " forces " << cn<<" "<<beta1<<" "<<beta2<<" "<<dpsi<<endl;
-        cout<< " vp_x " << vp(0) <<  " vp_y " << vp(1)<<endl;
+        cout<< " contact " << contact <<endl;
+        // cout<< " dx " << dx << " dy "<<dy << " dtheta "<<dtheta <<endl;
+        // cout<< " xp " << xp << " yp " <<yp;
+        // cout<< " forces " << cn<<" "<<beta1<<" "<<beta2<<" "<<dpsi<<endl;
+        // cout<< " vp_x " << vp(0) <<  " vp_y " << vp(1)<<endl;
+        // cout<<" dq_slider_next "<<dq_slider_next<<endl;
+        
 	return contact;
 
 
