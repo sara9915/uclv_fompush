@@ -48,7 +48,7 @@ Push::Push(char* Q_cost, char* Abar_str, char* Ain, char* bin, char* Aeq, char* 
 	b = 0.09;
 	A = a*b;
 	g = 9.81;
-	h = 1.f/250; // Think about this!
+	h = 1.f/1000; // Think about this!
 
 	_Q_cost = Q_cost;
 	_Ain = Ain;
@@ -616,7 +616,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	const double b = 0.09;
 	const double A = a*b;
 	const double g = 9.81;
-	const double h = 1.f/250; // Think about this!
+	const double h = 1.f/1000.0; // Think about this!
 
 	MatrixXd M_inv(3,3);
 	MatrixXd Cbi(3,3);
@@ -767,44 +767,51 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
         Eye << 1,0,0,1;
 
 	double cn   = u(0)*1+ 3.6155;
-	double beta1= u(1)*1;
-	double beta2= u(2)*1;
-	double dpsi = u(3)*1;
+	double beta1= u(1)*0;
+	double beta2= u(2)*0;
+	double dpsi = u(3)*0;
 
         // theta=0;
-	dq_slider_next << dq_slider + h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
-        q_slider_next =q_slider + h*dq_slider_next;
+	dq_slider_next << dq_slider*1 + h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
+        // q_slider_next =q_slider + h*dq_slider_next;
         
 	w_b_next = n3*dq_slider_next(2);
 	Rotational_term = cross_op(w_b_next)*r_pb_i;
 	dpsi_vec << 0, dpsi, 0;
         
 	dr_pb_i = Cbi.transpose()*dpsi_vec;
-	vc =  dq_slider_next + Rotational_term + dr_pb_i;
-
-
-	vp(0) = vc(0);
+	vc =  dq_slider_next + Rotational_term*1 + dr_pb_i*1;
+// 
+	// vp(0) = vc(0);
+	// vp(1) = vc(1);
+        vp(0) = vc(0);
 	vp(1) = vc(1);
         
-        psi_next = psi+h*dpsi*1;
-        contact_vec << xp_des, yp_des;
+        // cout<< " vp " << vp << endl;
+        // cout<< " dq_slider " << dq_slider << endl;
+// 
+        // psi_next = psi+h*dpsi*1;
+        // contact_vec << xp_des, yp_des;
+        // 
+        // Cbi_T = Cbi.transpose();
         
-        Cbi_T = Cbi.transpose();
-        cout<< Cbi_T.topLeftCorner(2,2)<<endl;
+        // cout<< Cbi_T.topLeftCorner(2,2)<<endl;
         
         // contact = Cbi_T.topLeftCorner(2,2)*contact_vec + q_slider_next.topLeftCorner(2,1);
         
-        contact = contact_vec + h*vp;
+        // contact = contact_vec + h*vp;
 
-        cout<< " x " << x << " y "<<y << " theta "<<theta <<endl;
-        cout<< " contact " << contact <<endl;
+        // cout<< " x " << x << " y "<<y << " theta "<<theta <<endl;
+        // cout<< " contact " << contact <<endl;
+        
+        
         // cout<< " dx " << dx << " dy "<<dy << " dtheta "<<dtheta <<endl;
         // cout<< " xp " << xp << " yp " <<yp;
         // cout<< " forces " << cn<<" "<<beta1<<" "<<beta2<<" "<<dpsi<<endl;
         // cout<< " vp_x " << vp(0) <<  " vp_y " << vp(1)<<endl;
         // cout<<" dq_slider_next "<<dq_slider_next<<endl;
         
-	return contact;
+	return vp;
 
 
 
@@ -861,6 +868,32 @@ MatrixXd smooth(MatrixXd data, float filterVal, MatrixXd smoothedVal){
   smoothedVal = (data * (1 - filterVal)) + (smoothedVal  *  filterVal);
 
   return smoothedVal;
+}
+
+//***************************************
+void write_file(FILE* myFile, int num_rows, int num_cols, double *A)
+{
+    int i;
+    int j;
+    float value;
+
+
+        const int RowOffset = (0 * num_cols);
+        for (j=0;j<num_cols;j++)
+        {;
+        value = A[RowOffset + j] ;
+
+        if (j==num_cols-1){
+            fprintf(myFile, "%e \n",  value);}
+        else
+        {
+            fprintf(myFile, "%e ",  value);
+
+
+        }
+
+    }
+
 }
 
 

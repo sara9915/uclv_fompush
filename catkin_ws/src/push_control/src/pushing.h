@@ -189,6 +189,7 @@ MatrixXd cross_op(MatrixXd w); // Build cross square skew symmetric matrix
 MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double xp_des, double yp_des);
 double gettime();
 MatrixXd  smooth(MatrixXd data, float filterVal, MatrixXd smoothedVal);
+void write_file(FILE* myFile, int num_rows, int num_cols, double *A);
 
 #endif
 
