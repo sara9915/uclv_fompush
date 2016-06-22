@@ -629,6 +629,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	MatrixXd d1(3,1);
 	MatrixXd d2(3,1);
 	MatrixXd vp(2,1);
+        MatrixXd ap(2,1);
 
 	M_inv << 1/m,0,0,0,1/m,0,0,0,1/J;
 
@@ -655,6 +656,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	w_i = Cbi.transpose()*w_b;
 	r_pb_b = Cbi*r_pb_i;
 	double psi =r_pb_b(2);
+        // cout<< " psi " << psi <<endl;
 //
 //
 // theta=0;
@@ -766,13 +768,15 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
         MatrixXd Eye(2,2);
         Eye << 1,0,0,1;
 
-	double cn   = u(0)*1+ 3.6155;
+	double cn   = 4.0;//u(0)*0+ 3.6155;
 	double beta1= u(1)*0;
 	double beta2= u(2)*0;
 	double dpsi = u(3)*0;
 
         // theta=0;
+
 	dq_slider_next << dq_slider*1 + h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
+        // cout<< " vp_x " << vp(0) <<" vp_y " << vp(1) <<endl;
         // q_slider_next =q_slider + h*dq_slider_next;
         
 	w_b_next = n3*dq_slider_next(2);
@@ -784,22 +788,23 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 // 
 	// vp(0) = vc(0);
 	// vp(1) = vc(1);
-        vp(0) = vc(0);
-	vp(1) = vc(1);
+        // 
+        // vp(0) =0.05;//dq_slider(0) + h*ax;
+	// vp(1) = 0;//dq_slider(1)*0;//dq_slider(1);//vc(1);
         
         // cout<< " vp " << vp << endl;
         // cout<< " dq_slider " << dq_slider << endl;
 // 
         // psi_next = psi+h*dpsi*1;
         // contact_vec << xp_des, yp_des;
-        // 
+        
         // Cbi_T = Cbi.transpose();
         
         // cout<< Cbi_T.topLeftCorner(2,2)<<endl;
         
         // contact = Cbi_T.topLeftCorner(2,2)*contact_vec + q_slider_next.topLeftCorner(2,1);
         
-        // contact = contact_vec + h*vp;
+        // contact = contact_vec + h*vp + h^2*ax;
 
         // cout<< " x " << x << " y "<<y << " theta "<<theta <<endl;
         // cout<< " contact " << contact <<endl;
@@ -811,7 +816,10 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
         // cout<< " vp_x " << vp(0) <<  " vp_y " << vp(1)<<endl;
         // cout<<" dq_slider_next "<<dq_slider_next<<endl;
         
-	return vp;
+        ap(0) = 0.05;
+        ap(1) = 0.0;
+        
+	return ap;
 
 
 

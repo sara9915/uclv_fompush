@@ -391,6 +391,7 @@ main(int argc,  char *argv[])
     MatrixXd Target(2,1);
     MatrixXd u_control(4,1);
     MatrixXd vp(2,1);
+    MatrixXd ap(2,1);
     MatrixXd _q_slider_(3,1);
     MatrixXd _dq_slider_(3,1);
     MatrixXd smoothed_dq_slider(3,1);
@@ -536,10 +537,11 @@ main(int argc,  char *argv[])
         
     double x0 = x_tcp;
     double y0 = y_tcp;
+    vp << 0,0;
     //usleep(1e6);
     double _x_tcp_old = 0.0;
 
-    for (int i=0;i<5000  && ros::ok();i++){
+    for (int i=0;i<15000  && ros::ok();i++){
 
         if (i==0){t_ini = gettime();}
         // //Get time and set frequency of loop to 250 Hz
@@ -566,8 +568,8 @@ main(int argc,  char *argv[])
         
         theta = _q_slider_(2);
         pthread_mutex_lock(&nonBlockMutex);
-        q_pusher(0) = x_tcp + tcp_width*cos(theta*1);
-        q_pusher(1) = y_tcp + tcp_width*sin(theta*1);
+        q_pusher(0) = _x_tcp;// + tcp_width*cos(theta*1);
+        q_pusher(1) = _y_tcp;// + tcp_width*sin(theta*1);
         
         //Assign local variables
         _q_slider_ = q_slider;
@@ -580,8 +582,8 @@ main(int argc,  char *argv[])
         //**********************************************************************************
 
          
-        vp = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, _u_control_, _x_tcp, _y_tcp);
-        cout<< " vp "<< vp << endl;
+        
+        // cout<< " vp "<< vp << endl;
         // cout<<vp<<endl;
         // vp(0) = 0.05;
         // vp(1) = 0;
@@ -630,10 +632,16 @@ main(int argc,  char *argv[])
      
         //constant acceleration
         if (time<=1)
-          x_tcp = x_tcp;
+          {x_tcp = x_tcp;}
         else
-          x_tcp = x_tcp + 1*vp(0)*(1)/1000.0;
-          y_tcp = y_tcp + 1*vp(1)*1/1000.0;
+          {ap = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, _u_control_, x_tcp, y_tcp);
+          double h = 1.0f/1000;
+          vp(0) = vp(0) + h*ap(0);
+          vp(1) = vp(1) + h*ap(1);
+          x_tcp = x_tcp + h*vp(0) + h*h*ap(0);
+          y_tcp = y_tcp + h*vp(1) + h*h*ap(1);
+          }//vp(0)*(1)/1000.0;
+          // y_tcp = vp(1);//y_tcp + vp(1)*1/1000.0;
           
         Position_Outputs[0] = x_tcp;
         Position_Outputs[1] = _x_tcp;
@@ -642,7 +650,7 @@ main(int argc,  char *argv[])
         // y_tcp = yp ;//- tcp_width*sin(theta*1);
                 
        printf("%.6lf ", time);
-       // cout<< " " << i<<  "  "<< x_tcp<<"  " <<_x_tcp<< endl;
+       cout<<  x_tcp  <<" "<<_x_tcp<<endl;
 
         //Set Robot TCP cartesian coordinates
         // send a message to the robot
