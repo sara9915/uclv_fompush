@@ -219,8 +219,8 @@ void CreateSensorMessage(EgmSensor* pSensorMessage, float x, float y)
     // z = 0.25;
     if(x > 0.5) x = 0.5;
     if(x < 0.15) x = 0.15;
-    if(y > 0.1) y = 0.1;
-    if(y < -0.1) y = -0.1;
+    if(y > 0.2) y = 0.2;
+    if(y < -0.2) y = -0.2;
     pc->set_x(x*1000);    // convert to robot representation mm
     pc->set_y(y*1000);          
     pc->set_z(z*1000);
@@ -334,7 +334,7 @@ bool getViconPose(MatrixXd& q_slider, TransformListener& listener){
         double roll, pitch, yaw;
         m.getRPY(roll, pitch, yaw);
         
-        q_slider << obj_pose.getOrigin().getX(), obj_pose.getOrigin().getY(), yaw;
+        q_slider << obj_pose.getOrigin().getX(), obj_pose.getOrigin().getY()+ 0.018, yaw;
         return true;
     }
     catch (tf::TransformException ex){
@@ -346,7 +346,7 @@ bool getViconPose(MatrixXd& q_slider, TransformListener& listener){
 bool getViconVel(MatrixXd& dq_slider, TransformListener& listener){
     geometry_msgs::Twist obj_twist;
     try{
-        listener.lookupTwist("vicon/StainlessSteel/StainlessSteel", "map", ros::Time(0), ros::Duration(0.005), obj_twist);
+        listener.lookupTwist("vicon/StainlessSteel/StainlessSteel", "map", ros::Time(0), ros::Duration(0.1), obj_twist);
         dq_slider << obj_twist.linear.x, obj_twist.linear.y, obj_twist.angular.z;
         return true;
     }
@@ -464,9 +464,14 @@ main(int argc,  char *argv[])
     //Initialize Vicon and robot data collection
         
     int tmp = 0;
-    
+    int lv1 = 0;
+    // double xs_old=0, xs,dxs;
+    // double ys_old=0, ys,dys ;
+    // double thetas_old=0, thetas, dthetas;
+    // double h1;
 
-    while((!has_robot || !has_vicon_pos || !has_vicon_vel || tmp < 5000) && ros::ok())
+    // !has_robot ||
+    while((!has_robot || !has_vicon_pos || !has_vicon_vel || tmp < 3000) && ros::ok())
     //while(ros::ok())
     {
         tmp++;
@@ -483,15 +488,35 @@ main(int argc,  char *argv[])
             has_vicon_pos = true;
         if(getViconVel(dq_slider, listener))
             has_vicon_vel = true;
-        // printf("RobotPose %f %f %f\n", x_tcp, y_tcp, z_tcp);
-        // printf("q_slider %f %f %f\n", q_slider(0), q_slider(1), q_slider(2));
-        // printf("dq_slider %f %f %f\n", dq_slider(0), dq_slider(1), dq_slider(2));
-        // dq_slider=-dq_slider;
+            
+        // h1 = 4e3/(1e6);
+            
+        // if (!has_vicon_pos){
+        // xs_old = q_slider(0);
+        // ys_old = q_slider(1);
+        // thetas_old = q_slider(2);}
+        // else{
+        // xs_old = xs;
+        // ys_old = ys;
+        // thetas_old = thetas;
+        // }
+
+        // xs     = smooth( q_slider(0),  0.00,  xs);
+        // ys     = smooth( q_slider(1),  0.00,  ys);
+        // thetas = smooth( q_slider(2),  0.00,  thetas);
+        // 
+        // dxs = (xs-xs_old)/(h1);
+        // dys = (ys-ys_old)/(h1);
+        // dthetas = (thetas-thetas_old)/(h1);
         
+        // printf("RobotPose %f %f %f\n", x_tcp, y_tcp, z_tcp);
+        printf(" %d %f %f %f %f %f %f %f %f\n", lv1, q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), x_tcp, y_tcp);
+        // dq_slider=-dq_slider;
+        lv1+=1;
         usleep(4e3);
     }
-    
-    
+
+    // return 0;
     //Read Vicon and Initialize Variables
     theta = q_slider(2);
 
@@ -507,7 +532,7 @@ main(int argc,  char *argv[])
     
     for(int i=0;i<1000;i++){
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
-            // cout << " In second loop" << endl;
+            cout << " In second loop" << endl;
             has_robot = true;
             CreateSensorMessageEmpty(pSensorMessage);
             //CreateSensorMessage(pSensorMessage,0.4,-0.04);
@@ -537,6 +562,8 @@ main(int argc,  char *argv[])
         
     double x0 = x_tcp;
     double y0 = y_tcp;
+    double dx_smooth=0;
+    double dy_smooth=0;
     vp << 0,0;
     //usleep(1e6);
     double _x_tcp_old = 0.0;
@@ -554,31 +581,38 @@ main(int argc,  char *argv[])
 
         //**********************  Get State of robot and object from ROS *********************************
 
-        pthread_mutex_lock(&nonBlockMutex);
-        if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
-            // cout<< "********************************"<<endl;
-            // printf("getRobotPose %f %f %f\n", _x_tcp, _y_tcp, _z_tcp);
-            // cout<< "*******************************"<<endl;            
+        // pthread_mutex_lock(&nonBlockMutex);
+
+       if (i % 500==0){
+           if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
+            cout<< "********************************"<<endl;
+            printf("getRobotPose %f %f %f\n", _x_tcp, _y_tcp, _z_tcp);
+            cout<< "*******************************"<<endl;            
         }
+        // _x_tcp = x_tcp;
+        // _y_tcp = y_tcp;
+        
         
         getViconPose(q_slider, listener);
         getViconVel(dq_slider, listener);
-
-        pthread_mutex_unlock(&nonBlockMutex);
-        
-        theta = _q_slider_(2);
-        pthread_mutex_lock(&nonBlockMutex);
+        cout<< "***************************************************************************************************"<<endl;
+        }
+// 
+        // pthread_mutex_unlock(&nonBlockMutex);
+        // 
+        // theta = _q_slider_(2);
+        // pthread_mutex_lock(&nonBlockMutex);
         q_pusher(0) = _x_tcp;// + tcp_width*cos(theta*1);
         q_pusher(1) = _y_tcp;// + tcp_width*sin(theta*1);
-        
-        //Assign local variables
-        _q_slider_ = q_slider;
-        _dq_slider_ = dq_slider*1; //Will need to numerically differentiate this value
+        // 
+        // //Assign local variables
+        // _q_slider_ = q_slider;
+        // _dq_slider_ = dq_slider*1; //Will need to numerically differentiate this value
         _q_pusher_ = q_pusher;
-        _Target_ = Target;
+        // _Target_ = Target;
         _u_control_ = u_control;
-
-        pthread_mutex_unlock(&nonBlockMutex);
+// 
+        // pthread_mutex_unlock(&nonBlockMutex);
         //**********************************************************************************
 
          
@@ -630,17 +664,42 @@ main(int argc,  char *argv[])
         //else
         //  x_tcp = 0.23+0.05*(time-1);
      
-        //constant acceleration
+        //wait
         if (time<=1)
           {x_tcp = x_tcp;}
         else
-          {ap = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, _u_control_, x_tcp, y_tcp);
+        {
+        // double data;
+        // dx_smooth =  smooth(_dq_slider_(0), 0.99, dx_smooth);
+        // dy_smooth =  smooth(_dq_slider_(1), 0.99, dy_smooth);
+        // _dq_slider_(0) = dx_smooth;
+        // _dq_slider_(1) = dy_smooth;
+        cout<< " q_slider "<<q_slider<<endl;
+        cout<< " _q_pusher_ "<<_q_pusher_<<endl;
+        cout<< " dq_slider "<<dq_slider<<endl;
+        ap = inverse_dynamics2(_q_pusher_, q_slider, dq_slider, _u_control_, x_tcp, y_tcp);
+        q_slider(0)  = ap(2);
+        q_slider(1)  = ap(3);
+        q_slider(2)  = ap(4);
+        dq_slider(0) = ap(5);
+        dq_slider(1) = ap(6);
+        dq_slider(2) = ap(7);
+        
+        
+        
           double h = 1.0f/1000;
-          vp(0) = vp(0) + h*ap(0);
-          vp(1) = vp(1) + h*ap(1);
-          x_tcp = x_tcp + h*vp(0) + h*h*ap(0);
-          y_tcp = y_tcp + h*vp(1) + h*h*ap(1);
-          }//vp(0)*(1)/1000.0;
+          // vp(0) = vp(0) + h*ap(0);
+          // vp(1) = vp(1) + h*ap(1);
+          x_tcp = x_tcp + h*ap(0);// + 0*h*h*ap(0);
+          y_tcp = y_tcp + h*ap(1);// y_tcp = ap(1);//y_tcp + h*0;//vp(1) + 0*h*h*ap(1);
+          _x_tcp = _x_tcp + h*ap(0);// + 0*h*h*ap(0);
+          _y_tcp = _y_tcp + h*ap(1);
+          cout<< " ************************* "<<endl;
+          cout<< " ap "<<ap<<endl;
+          cout<< " **************************** "<<endl;
+          // return 0;
+          }
+          //vp(0)*(1)/1000.0;
           // y_tcp = vp(1);//y_tcp + vp(1)*1/1000.0;
           
         Position_Outputs[0] = x_tcp;
@@ -649,8 +708,9 @@ main(int argc,  char *argv[])
         //- tcp_width*cos(theta*1);
         // y_tcp = yp ;//- tcp_width*sin(theta*1);
                 
-       printf("%.6lf ", time);
-       cout<<  x_tcp  <<" "<<_x_tcp<<endl;
+       printf("%.6lf \n", time);
+
+       // cout<<  dx_smooth  <<" "<<dy_smooth<<endl;
 
         //Set Robot TCP cartesian coordinates
         // send a message to the robot

@@ -5,7 +5,10 @@ clear
 M = dlmread('Output4.txt');
 
 t = (M(:,1)-M(1,1));
-sent = M(:,2);
-actual = M(:,3);
+dx1 = M(:,5);
+dy1 = M(:,6);
+dtheta1 = M(:,7);
 
-figure; plot(t, sent); hold on; plot(t, actual);
+
+figure; plot(t, dx1); hold on; plot(t, dy1);  hold on; plot(t, dtheta1);
+legend('dx','dy','dtheta')

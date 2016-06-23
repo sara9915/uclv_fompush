@@ -629,12 +629,11 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	MatrixXd d1(3,1);
 	MatrixXd d2(3,1);
 	MatrixXd vp(2,1);
-        MatrixXd ap(2,1);
+        MatrixXd ap(8,1);
+        MatrixXd ap_3x1(3,1);
 
 	M_inv << 1/m,0,0,0,1/m,0,0,0,1/J;
 
-
-//
 	double x = q_slider(0);
 	double y = q_slider(1);
 	double theta = q_slider(2)*1;
@@ -657,9 +656,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	r_pb_b = Cbi*r_pb_i;
 	double psi =r_pb_b(2);
         // cout<< " psi " << psi <<endl;
-//
-//
-// theta=0;
+        
 	Cbi << cos(theta), sin(theta), 0, -sin(theta), cos(theta), 0, 0, 0, 1;
         Cbi_T = Cbi.transpose();
 	MatrixXd f_f(3,1);
@@ -688,8 +685,8 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	double w1g = 1;
 	double w2g = 1;
 
-	double x1g = sqrt(1/3);
-	double x2g = -sqrt(1/3);
+	double x1g = sqrt(1.0f/3);
+	double x2g = -sqrt(1.0f/3);
 
 	MatrixXd value1(1,1);
 	MatrixXd value2(1,1);
@@ -708,15 +705,15 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	MatrixXd v_point3_norm(3,1);
 	MatrixXd v_point4_norm(3,1);
 
-	point1 <<h1*x1g + h2, h1*x1g+h2, 0;
+	point1 <<h1*x1g+h2, h1*x1g+h2, 0;
 	point2 <<h1*x1g+h2, h1*x2g+h2, 0;
 	point3 <<h1*x2g+h2, h1*x1g+h2, 0;
 	point4 <<h1*x2g+h2, h1*x2g+h2, 0;
 
 	v_point1 = Cbi*v_i_3d + cross_op(w_b)*point1;
-	v_point2 = Cbi*v_i_3d + cross_op(w_b)*point1;
-	v_point3 = Cbi*v_i_3d + cross_op(w_b)*point1;
-	v_point4 = Cbi*v_i_3d + cross_op(w_b)*point1;
+	v_point2 = Cbi*v_i_3d + cross_op(w_b)*point2;
+	v_point3 = Cbi*v_i_3d + cross_op(w_b)*point3;
+	v_point4 = Cbi*v_i_3d + cross_op(w_b)*point4;
 
 	v_point1_norm = v_point1/v_point1.norm();
 	v_point2_norm = v_point2/v_point2.norm();
@@ -732,6 +729,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 
 	integral = h1*h3 *( w1g*w1g*value1 + w1g*w2g*value2 + w2g*w1g*value3 + w2g*w2g* value4);
 
+ 
 
 	if (v_i.norm()  < 0.001)
 	{
@@ -741,8 +739,8 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 		f_f = -Temp*nu*m*g*v_i/v_i.norm() ;
 	}
 
-
-	if (dtheta < 0.001){
+        
+	if (abs(dtheta) < 0.001){
 		n_f << 0,0,0;
 	}
 	else
@@ -759,32 +757,46 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
         MatrixXd q_slider_next(3,1);
         MatrixXd contact(2,1);
         double psi_next;
-	MatrixXd w_b_next(1,1);
+	MatrixXd w_b_next(3,1);
+        MatrixXd dw(3,1);
 	MatrixXd Rotational_term(3,1);
 	MatrixXd dr_pb_i(3,1);
 	MatrixXd dpsi_vec(3,1);
         MatrixXd contact_vec(2,1);
 	MatrixXd vc(3,1);
         MatrixXd Eye(2,2);
+        MatrixXd ddq(3,1);
+        MatrixXd ao(3,1);
+        MatrixXd vp_temp(3,1);
         Eye << 1,0,0,1;
 
-	double cn   = 4.0;//u(0)*0+ 3.6155;
+	double cn   = u(0)*0+3.65;////3.6155;
 	double beta1= u(1)*0;
 	double beta2= u(2)*0;
 	double dpsi = u(3)*0;
-
+        // dpsi = -10*psi;
         // theta=0;
-
+        // ao <<0.01,0,0;
 	dq_slider_next << dq_slider*1 + h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
+        q_slider_next << q_slider + h*dq_slider_next;
+        w_b_next = n3*dq_slider_next(2);
+        
+        dpsi_vec << 0, dpsi, 0;
+        dr_pb_i = Cbi.transpose()*dpsi_vec;
+        vp_temp<< dq_slider_next + cross_op(w_b_next)*r_pb_i*1 + dr_pb_i*1;
+        // cout<< " dq_slider_next "<<dq_slider_next<<endl;
+        // cout<< " vp_temp "<<vp_temp<<endl;
+        // xp = xp+h*vp_temp(0);
+        // yp = yp+h*vp_temp(1);
         // cout<< " vp_x " << vp(0) <<" vp_y " << vp(1) <<endl;
         // q_slider_next =q_slider + h*dq_slider_next;
         
-	w_b_next = n3*dq_slider_next(2);
-	Rotational_term = cross_op(w_b_next)*r_pb_i;
-	dpsi_vec << 0, dpsi, 0;
+	// w_b_next = n3*dq_slider_next(2);
+	// Rotational_term = cross_op(w_b_next)*r_pb_i;
+	// dpsi_vec << 0, dpsi, 0;
         
-	dr_pb_i = Cbi.transpose()*dpsi_vec;
-	vc =  dq_slider_next + Rotational_term*1 + dr_pb_i*1;
+	// dr_pb_i = Cbi.transpose()*dpsi_vec;
+	// vc =  dq_slider_next + Rotational_term*1 + dr_pb_i*1;
 // 
 	// vp(0) = vc(0);
 	// vp(1) = vc(1);
@@ -816,9 +828,27 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
         // cout<< " vp_x " << vp(0) <<  " vp_y " << vp(1)<<endl;
         // cout<<" dq_slider_next "<<dq_slider_next<<endl;
         
-        ap(0) = 0.05;
-        ap(1) = 0.0;
+        // ap(0) = 0.05;
+        // ap(1) = 0.0;
         
+        // ddq = M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
+        // ao(0) = ddq(0);
+        // ao(1) = ddq(1);
+        // dw = n3*ddq(2);
+        // 
+        // ap_3x1 = ao  + cross_op(dw)*r_pb_i*0 + cross_op(w_b)*cross_op(w_b)*r_pb_i*0;
+        // ap(0) = 0.05;
+        // ap(1) =0.0;
+        // 
+        // cout << " ao " << ao << endl;
+        // cout << " dw " << dw << endl;
+        // cout << " f_friction " << f_friction<< endl;
+        // cout << " n*cn " << n*cn<< endl;
+        // cout << " d1*beta1 " << d1*beta1<< endl;
+        // cout << " qslider " << q_slider<< endl;
+        // cout << dq_slider(0) << "   " << dq_slider(1)<< endl;
+        // cout << " ap " << ap << endl;
+        ap << vp_temp(0), vp_temp(1),q_slider_next, dq_slider_next;
 	return ap;
 
 
@@ -863,7 +893,7 @@ double gettime()
 }
 
 //******************************
-MatrixXd smooth(MatrixXd data, float filterVal, MatrixXd smoothedVal){
+double smooth(double data, float filterVal, double smoothedVal){
 
 
   if (filterVal > 1){      // check to make sure param's are within range
