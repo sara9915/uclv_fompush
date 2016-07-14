@@ -52,6 +52,8 @@ typedef struct thread_data{
     MatrixXd  *_dq_slider;
     MatrixXd  *_Target;
     MatrixXd  *_u_control;
+    MatrixXd  *_ap;
+    double  *_dpsi;
 
 } tdata_t;
 
@@ -73,12 +75,16 @@ void *rriMain(void *thread_arg)
     MatrixXd *pq_pusher = my_data->_q_pusher;
     MatrixXd *pTarget = my_data->_Target;
     MatrixXd *pu_control = my_data->_u_control;
+    MatrixXd *pap = my_data->_ap;
+    double *pdpsi = my_data->_dpsi;
 
     MatrixXd &q_slider = *pq_slider;
     MatrixXd &dq_slider = *pdq_slider;
     MatrixXd &q_pusher = *pq_pusher;
     MatrixXd &Target = *pTarget;
     MatrixXd &u_control = *pu_control;
+    MatrixXd &ap = *pap;
+    double &dpsi = *pdpsi;
     pthread_mutex_unlock(&nonBlockMutex);
 
     //Define local variables
@@ -124,8 +130,8 @@ void *rriMain(void *thread_arg)
     pUp    = new Push (Q_str, Abar_str, Ain_up_str, bin_up_str, Aeq_up_str, beq_up_str);
     pDown  = new Push (Q_str, Abar_str, Ain_down_str, bin_down_str, Aeq_down_str, beq_down_str);
 
-    Push &Stick = *pStick;
-    Push &Up = *pUp;
+    Push &Stick= *pStick;
+    Push &Up   = *pUp;
     Push &Down = *pDown;
 
     //Build optimization models
@@ -144,12 +150,7 @@ void *rriMain(void *thread_arg)
     while(time<50000 && ros::ok())
         {
         if (time==0){t_ini = gettime();}
-        time = gettime()- t_ini;
-//      T_des = counter*step_size;
-//      delta_t = (T_des - time)*1e6;
-//      if (delta_t > 0){usleep(delta_t);}
-// cout<< " time " << time<<endl;
-        
+        time = gettime()- t_ini;      
 
         //Read state of robot and object from shared variables
         pthread_mutex_lock(&nonBlockMutex);
@@ -179,6 +180,14 @@ void *rriMain(void *thread_arg)
         if (minIndex==0){u_control = Stick.delta_u;}
         else if (minIndex==1){  u_control = Up.delta_u;}
         else{   u_control = Down.delta_u;}
+        
+        // Determine desired velocity of pusher
+        MatrixXd Output(4,1);
+        Output = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, u_control, dpsi);
+        ap(0) = Output(0);
+        ap(1) = Output(1);
+        dpsi  = Output(3);
+        
         pthread_mutex_unlock(&nonBlockMutex);
 
         counter++;
@@ -391,7 +400,7 @@ main(int argc,  char *argv[])
     MatrixXd Target(2,1);
     MatrixXd u_control(4,1);
     MatrixXd vp(2,1);
-    MatrixXd ap(5,1);
+    MatrixXd ap(2,1);
     MatrixXd _q_slider_(3,1);
     MatrixXd _dq_slider_(3,1);
     MatrixXd smoothed_dq_slider(3,1);
@@ -420,6 +429,7 @@ main(int argc,  char *argv[])
     bool has_vicon_pos = false;
     bool has_vicon_vel = false;
     double Position_Outputs[2];
+    double tang_vel=0;
     FILE *myFile = NULL;
 
     //****************************************************************
@@ -441,6 +451,8 @@ main(int argc,  char *argv[])
     thread_data_array[0]._dq_slider = &dq_slider;
     thread_data_array[0]._Target = &Target;
     thread_data_array[0]._u_control = &u_control;
+    thread_data_array[0]._ap = &ap;
+    thread_data_array[0]._dpsi = &tang_vel;
         
     // Create socket and wait for robot's connection
     UDPSocket* EGMsock;
@@ -534,10 +546,8 @@ main(int argc,  char *argv[])
     theta = q_slider(2);
 
     Target << .5,-0.040;
-    q_pusher(0) = x_tcp + tcp_width*cos(theta);
-    q_pusher(1) = y_tcp - tcp_width*sin(theta);
-    xp_des = q_pusher(0);
-    yp_des =  q_pusher(1);
+    q_pusher(0) = x_tcp;
+    q_pusher(1) = y_tcp;
 
     //Create Thread
     pthread_create(&rriThread, &attrR, rriMain, (void*) &thread_data_array[0]) ;
@@ -565,61 +575,44 @@ main(int argc,  char *argv[])
             
         }
     
-    //usleep(1e6);
-    //****************************************************************
 
     //****************************************************************
     //************** Main Control Loop ****************************
     //****************************************************************
         
-        
-    double x0 = x_tcp;
-    double y0 = y_tcp;
     double psi_des = 0;
     double dx_smooth=0;
     double dy_smooth=0;
-    vo_des = dq_slider;
     vp << 0,0;
-    
-    //usleep(1e6);
     double _x_tcp_old = 0.0;
     
- // cout << " Start Third Loop" << endl;
+
     for (int i=0;i<15000  && ros::ok();i++){
-        // cout << " In Third Loop" << endl;
+
         if (i==0){t_ini = gettime();}
-        // //Get time and set frequency of loop to 250 Hz
         time = gettime()- t_ini;
-        // //printf("time:%f\n", time);
-        // T_des = i*step_size;
-        // delta_t = T_des - time;
-        // delta_t = delta_t*1e6;
-        //if (delta_t > 0){usleep(delta_t);}
 
         //**********************  Get State of robot and object from ROS *********************************
 
         // pthread_mutex_lock(&nonBlockMutex);
-       _x_tcp = x_tcp;
-       _y_tcp = y_tcp;
+       // _x_tcp = x_tcp;
+       // _y_tcp = y_tcp;
 
        // Use this section for simulation purposes
-       if (i % 10==0){
-           qo_des = q_slider;
-           vo_des = dq_slider;
-           if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
-            // cout<< "********************************"<<endl;
-            // printf("getRobotPose %f %f %f\n", _x_tcp, _y_tcp, _z_tcp);
-            // cout<< "*******************************"<<endl;   
-            }         
-        }
+       // if (i % 1==0){
+           // qo_des = q_slider;
+           // vo_des = dq_slider;
+           // if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
+            // }         
+        // }
+        
+        //Lock Mutex
         pthread_mutex_lock(&nonBlockMutex);
         // _x_tcp = x_tcp;
         // _y_tcp = y_tcp;
 
+        /* Get Pose and velocity of sliding object */
         getViconPose(q_slider, listener);
-        // getFilteredVel(dq_slider);
-        // getViconVel(dq_slider, listener);
-        
         xs_old = xs;
         ys_old = ys;
         thetas_old = thetas; 
@@ -631,100 +624,45 @@ main(int argc,  char *argv[])
         dq_slider(0) = (xs-xs_old)/h1;
         dq_slider(1) = (ys-ys_old)/h1;
         dq_slider(2) = (thetas-thetas_old)/h1;
-        
-        pthread_mutex_unlock(&nonBlockMutex);
-        // cout<< "***************************************************************************************************"<<endl;
-        // }
-// 
-        // pthread_mutex_unlock(&nonBlockMutex);
-        // 
-        // theta = _q_slider_(2);
-        pthread_mutex_lock(&nonBlockMutex);
-        q_pusher(0) = _x_tcp;// + tcp_width*cos(theta*1);
-        q_pusher(1) = _y_tcp;// + tcp_width*sin(theta*1);
+
+        q_pusher(0) = x_tcp;// + tcp_width*cos(theta*1);
+        q_pusher(1) = y_tcp;// + tcp_width*sin(theta*1);
         
         //Assign local variables
         _q_slider_ = q_slider;
-        _dq_slider_ = dq_slider*1; //Will need to numerically differentiate this value
+        _dq_slider_ = dq_slider;
         _q_pusher_ = q_pusher;
         _Target_ = Target;
         _u_control_ = u_control;
-// 
+        cout<< " _u_control_ "<< _u_control_<<endl;
         pthread_mutex_unlock(&nonBlockMutex);
         //**********************************************************************************
-        // xp = _q_pusher_(0);
-        // yp = _q_pusher_(1);
 
-        // if (sqrt(pow(xp-Target(0),2)+pow(yp-Target(1),2))>0.05){
-            // xp=  xp + step_size*vp(0);
-            // xp=  xp + step_size*0.05;
-            // yp=  -0.04;// + step_size*vp(1)*1;
-            // if(xp-vp(0)<0.001 or yp-vp(1)<0.001)
-            // {
-              // xp = x_tcp;//vp(0);
-              // yp = y_tcp;//p(1);
-              // xp = x_tcp+ (step_size)*0.05;// + (1/step_size)*time*0.05;
-              // cout<<"Test Value"<<x0 + (step_size)*time*0.05<<endl;
-              // yp = y_tcp;
-              // }
-
-            // xp_des=xp;
-            // yp_des=yp;
-            // printf("vp %f %f\n", vp(0), vp(1));
-        // }
-        // else
-            // {cout<< "Target Reached within tolerance"<<endl; }
-         // cout << "Count: " << i << " Difference: " << _x_tcp_old - _x_tcp << endl; 
-        // _x_tcp_old = _x_tcp;
-        // cout<< " u_control " <<_u_control_;
-        // cout<< " cos(theta*1) " << cos(theta*1) << " tcp_width " <<tcp_width;
-
-        //wait
+        //wait for 1 sec before starting position control 
         if (time<=1)
           {x_tcp = x_tcp;}
         else
         {
 
+        // Print desired output
         printf(" %f %f %f %f %f %f %f %f %f\n", time, q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), x_tcp, y_tcp);
-        
-        // Determine desired velocity of pusher
-        ap = inverse_dynamics2(_q_pusher_, q_slider, dq_slider, _u_control_, x_tcp, y_tcp, qo_des, vo_des);
-        
-        qo_des(0) = ap(2);
-        qo_des(1) = ap(3);
-        qo_des(2) = ap(4);
-        vo_des(0) = ap(5);
-        vo_des(1) = ap(6);
-        vo_des(2) = ap(7);
-        // psi_des = h*ap(9)
-        
-        // cout << " vo_des " << vo_des << endl;
-        // cout << " dq_slider " << dq_slider << endl;
-
-          double h = 1.0f/1000;
-          // vp(0) = vp(0) + h*ap(0);
-          // vp(1) = vp(1) + h*ap(1);
-          // cout << " vp "  << vp << endl;
-          // cout << " ap "  << ap << endl;
-          x_tcp = ap(0);// + 1*h*h*ap(0);
-          y_tcp = ap(1);// + 1*h*h*ap(1);
-          
-          // _x_tcp = _x_tcp;// + h*ap(0);// + 0*h*h*ap(0);
-          // _y_tcp = _y_tcp;// + h*ap(1);
+               
+        double h = 1.0f/1000;
+        vp(0) = vp(0) + h*ap(0);
+        vp(1) = vp(1) + h*ap(1);
+        // cout << " vp "  << vp << endl;
+        // cout << " ap "  << ap << endl;
+        x_tcp = x_tcp + h*vp(0) + 1*h*h*ap(0);
+        y_tcp = y_tcp + h*vp(1) + 1*h*h*ap(1);
 
           }
-          //vp(0)*(1)/1000.0;
-          // y_tcp = vp(1);//y_tcp + vp(1)*1/1000.0;
-          
-        Position_Outputs[0] = x_tcp;
-        Position_Outputs[1] = _x_tcp;
-    // cout<< " x_tcp " << x_tcp << endl;
-    // cout<< " y_tcp " << y_tcp << endl;
+
+        // Send robot commands
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
-        // 
         pSensorMessage->SerializeToString(&messageBuffer);
         EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
-        //printf("Sent %lu\n", messageBuffer.length());
+        
+        //Sleep for 1000Hz loop
         usleep(1000);
     }
     

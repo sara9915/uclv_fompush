@@ -147,7 +147,7 @@ void Push::update_model(MatrixXd qs, MatrixXd vs, MatrixXd qp, MatrixXd Target)
 	x_sensor << x_ref(0), x_ref(1), theta_rel, psi, dxc, dyc, dtheta;
 
 	delta_x_temp = x_sensor -x_ref;
-
+        cout << " delta_x " << delta_x_temp;
 	for (int i=0;i<7;i++){
 		for (int j=0;j<7;j++){
 			A_bar_temp(i,j) = Abar[i][j]; }}
@@ -605,9 +605,9 @@ void Push::stack_arrays()
 
 //********************************************************************************
 
-MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double xp_des, double yp_des, MatrixXd qo_des, MatrixXd vo_des)
+MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel)
 {
-//
+        //Declare constant parameters
 	const double nu = 0.35;
 	const double nu_pusher = 0.3;
 	const double m = 1.0530;
@@ -618,69 +618,81 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	const double g = 9.81;
 	const double h = 1.f/1000.0; // Think about this!
 
+        // Declare function variables
 	MatrixXd M_inv(3,3);
 	MatrixXd Cbi(3,3);
         MatrixXd Cbi_T(3,3);
 	MatrixXd w_b(3,1);
 	MatrixXd w_i(3,1);
-	MatrixXd r_pb_b(3,1);
-	MatrixXd r_pb_i(3,1);
+	MatrixXd rbpb(3,1);
+	MatrixXd ripb(3,1);
 	MatrixXd n(3,1);
 	MatrixXd d1(3,1);
 	MatrixXd d2(3,1);
+	MatrixXd n_cart(3,1);
+	MatrixXd d1_cart(3,1);
+	MatrixXd d2_cart(3,1);
 	MatrixXd vp(2,1);
         MatrixXd ap(8,1);
         MatrixXd ap_3x1(3,1);
         MatrixXd ap_2x1(2,1);
-
-	M_inv << 1/m,0,0,0,1/m,0,0,0,1/J;
-
-	// double x = q_slider(0);
-	// double y = q_slider(1);
-	// double theta = q_slider(2)*1;
-// 
-	// double dx = dq_slider(0);
-	// double dy = dq_slider(1);
-	// double dtheta = dq_slider(2);
+        MatrixXd aibi(3,1);
+        MatrixXd vibi(3,1);
+        MatrixXd aipi(3,1);
+        MatrixXd vipi(3,1);
+        MatrixXd abpb(3,1);
+        MatrixXd vbpb(3,1);
+        MatrixXd wbbi(3,1);
+        MatrixXd dwbbi(3,1);
+        MatrixXd n3(3,1);
         
-	double x = qo_des(0);
-	double y = qo_des(1);
-	double theta = qo_des(2)*1;
-
-	double dx = vo_des(0);
-	double dy = vo_des(1);
-	double dtheta = vo_des(2);
-
+	double x = q_slider(0);
+	double y = q_slider(1);
+	double theta = q_slider(2)*1;
+	double dx = dq_slider(0);
+	double dy = dq_slider(1);
+	double dtheta = dq_slider(2);
 	double xp = q_pusher(0);
 	double yp = q_pusher(1);
 
+        //Define Kinematic relations
+        M_inv << 1/m,0,0,0,1/m,0,0,0,1/J;
+        n3<<0,0,1;
 	w_b << 0,0,dtheta;
-	r_pb_i << xp-x,yp-y,0;
+	wbbi << 0,0,dtheta;
+	ripb << xp-x,yp-y,0;
         
-	n << cos(theta), sin(theta), cos(theta)*(y-yp) - sin(theta)*(x-xp);
-	d1 << -sin(theta), cos(theta), -cos(theta)*(x-xp) - sin(theta)*(y-yp);
-	d2 << sin(theta), -cos(theta), cos(theta)*(x-xp) + sin(theta)*(y-yp);
+	// n << cos(theta), sin(theta), cos(theta)*(y-yp) - sin(theta)*(x-xp);
+	// d1 << -sin(theta), cos(theta), -cos(theta)*(x-xp) - sin(theta)*(y-yp);
+	// d2 << sin(theta), -cos(theta), cos(theta)*(x-xp) + sin(theta)*(y-yp);
 
         Cbi << cos(theta), sin(theta), 0, -sin(theta), cos(theta), 0, 0, 0, 1;
         Cbi_T = Cbi.transpose();
         
 	w_i = Cbi.transpose()*w_b;
-	r_pb_b = Cbi*r_pb_i;
-	double psi =r_pb_b(1);
-
+	rbpb = Cbi*ripb;
+        
+        
+        //Define variables
+	double psi =rbpb(1);
 	MatrixXd f_f(3,1);
 	MatrixXd Temp(3,2);
 	MatrixXd v_i(2,1);
 	MatrixXd v_i_3d(3,1);
-	MatrixXd n3(3,1);
 	MatrixXd n_f(3,1);
         MatrixXd qp_temp(3,1);
+        
+        //Define useful kinematic relationships
+        n <<   cos(theta), sin(theta), -psi;
+        d1 << -sin(theta), cos(theta), -0.045;
+        d2 << sin(theta), -cos(theta),0.045;
 
-	n3<<0,0,1;
+        // Kinematic relations
 	v_i << dx,dy;
 	v_i_3d << dx,dy,0;
 	Temp << 1,0,0,1,0,0;
-
+        
+        ///////////////////////////// Integration ///////////////////////////////////////////////////
 	// Gaussian points
 	double ag = -a/2;
 	double bg = a/2;
@@ -740,7 +752,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 
 	integral = h1*h3 *( w1g*w1g*value1 + w1g*w2g*value2 + w2g*w1g*value3 + w2g*w2g* value4);
 
- 
+         /////////////////////////////// Compute Frictional Forces ///////////////////////////////////////////////////
 
 	if (v_i.norm()  < 0.001)
 	{
@@ -762,17 +774,15 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	}
 
 	MatrixXd f_friction(3,1);
-
 	f_friction = f_f + n_f;
-//
-
+        
+        //Declare variables
 	MatrixXd dq_slider_next(3,1);
         MatrixXd q_slider_next(3,1);
         double psi_des = 0;
         MatrixXd contact(2,1);
         double psi_next;
 	MatrixXd w_b_next(3,1);
-        // MatrixXd dw_b(3,1);
         MatrixXd dw(3,1);
 	MatrixXd Rotational_term(3,1);
 	MatrixXd dr_pb_i(3,1);
@@ -791,62 +801,54 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
 	double beta1= u(1)*1;
 	double beta2= u(2)*1;
 	double dpsi = u(3)*1;
- 
-        // ao <<0.05,0,0;
-	
-        // rpb_b_des <<-a/2-0.00475, 0, 0;
-        // rpb_i_des = Cbi.transpose()*rpb_b_des;
+       
+        // Compute object acceleration
+        ao = M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
+        aibi << ao(0), ao(1), 0;
+        abpb << 0, (dpsi-tang_vel)/h,0;
+        dwbbi << 0,0,ao(2);
+        vbpb << 0,dpsi,0;
+
+        // aipi = aibi;
+        aipi = aibi + Cbi.transpose()*abpb + Cbi.transpose()*cross_op(dwbbi)*rbpb*1 + 2*Cbi.transpose()*cross_op(wbbi)*vbpb + Cbi.transpose()*cross_op(wbbi)*cross_op(wbbi)*rbpb;
         
         
-        // ao = M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
-        ao << .1,0,0;
-        dq_slider_next(0) =  vo_des(0)*1 + 5*h*ao(0);//h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
-        dq_slider_next(1) =  vo_des(1)*1 + 5*h*ao(1);//h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
-        dq_slider_next(2) =  vo_des(2)*1 + 5*h*ao(2);//h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
         
-        q_slider_next =qo_des + 5*h*dq_slider_next;
-        // q_slider_next(0) =  qo_des(0)*1 + 1*h*dq_slider_next(0);//h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
-        // q_slider_next(1) =  qo_des(1)*1 + 1*h*dq_slider_next(1);//h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
-        // q_slider_next(2) =  qo_des(2)*1 + 1*h*dq_slider_next(2);//h*M_inv*(f_friction + n*cn + d1*beta1 + d2*beta2 );
+        aipi<<0.05,0,0;
+        // printf(" %f %f %f %f %f %f %f %f %f\n", aipi(0), aipi(1),wbbi(2),dwbbi(2));
+        cout<< " q_slider "<< q_slider<<endl;
+        cout<< " dq_slider "<< dq_slider<<endl;
+        cout<< " psi "<< psi<<endl;
+        cout<< " q_pusher "<< q_pusher<<endl;
+        cout<< "  "<< endl;
+
+        cout<< " cn "<< cn<<endl;
+        cout<< " beta1 "<< beta1<<endl;
+        cout<< " beta2 "<< beta2<<endl;
+        cout<< " dpsi "<< dpsi<<endl;
+        cout<< "  "<< endl;
+        
+        cout<< " rbpb "<< rbpb<<endl;
+        cout<< " vbpb "<< vbpb<<endl;
+        cout<< "  "<< endl;
+        
+        cout<< " forces "<< (f_friction + n*cn + d1*beta1 + d2*beta2 )<<endl;
+        cout<< " f_friction "<< f_friction<<endl;
+        cout<< " control forces "<< n*cn + d1*beta1 + d2*beta2<<endl;
+        cout<< "  "<< endl;
+        
+        cout<< " n "<< n<<endl;
+        cout<< " d1 "<< d1<<endl;
+        cout<< " d2 "<< d2<<endl;
+        cout<< "  "<< endl;
         
 
-        w_b_next = n3*dq_slider_next(2);
         
-        dpsi_vec << 0, dpsi, 0;
-        dr_pb_i = Cbi.transpose()*dpsi_vec;
+        
+        MatrixXd Output(4,1);
+        Output<< aipi, dpsi;
 
-        // ap_2x1 =ao + app + 0*cross_op(dw)*r_pb_i + 1*cross_op(w_b)*cross_op(w_b)*r_pb_i + 2*cross_op(w_b)*dr_pb_i ;
-
-	Rotational_term = cross_op(w_b_next)*r_pb_i;
-	// dpsi_vec << 0, dpsi, 0;
-        
-	// dr_pb_i = Cbi.transpose()*dpsi_vec;
-	// vc =  dq_slider_next + Rotational_term*1 + dr_pb_i*1;
-// 
-        // vp(0) = vc(0);
-        // vp(1) = vc(1);
-        
-        vp(0) = q_slider_next(0) - a/2 - 0.01345;
-        vp(1) = q_slider_next(1);
-
-        
-        // cout<< " vp " << vp << endl;
-        // cout<< " ao " << ao << endl;
-
-        // cout<< " f_friction " << f_friction << endl;
-        // psi_next = psi+h*dpsi*1;
-        // contact_vec << xp_des, yp_des;
-        
-        // Cbi_T = Cbi.transpose();
-        
-        // cout<< Cbi_T.topLeftCorner(2,2)<<endl;
-        
-        // contact = Cbi_T.topLeftCorner(2,2)*contact_vec + q_slider_next.topLeftCorner(2,1);
-        
-        // contact = contact_vec + h*vp + h^2*ax;
-
-        ap <<  vp, q_slider_next,  dq_slider_next;
-	return ap;
+	return Output;
 
 
 
