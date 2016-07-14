@@ -603,13 +603,14 @@ main(int argc,  char *argv[])
        _y_tcp = y_tcp;
 
        // Use this section for simulation purposes
-       if (i % 1==0){
+       if (i % 10==0){
            qo_des = q_slider;
            vo_des = dq_slider;
-           // if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
+           if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
             // cout<< "********************************"<<endl;
             // printf("getRobotPose %f %f %f\n", _x_tcp, _y_tcp, _z_tcp);
-            // cout<< "*******************************"<<endl;            
+            // cout<< "*******************************"<<endl;   
+            }         
         }
         pthread_mutex_lock(&nonBlockMutex);
         // _x_tcp = x_tcp;
@@ -705,11 +706,11 @@ main(int argc,  char *argv[])
           // vp(1) = vp(1) + h*ap(1);
           // cout << " vp "  << vp << endl;
           // cout << " ap "  << ap << endl;
-          x_tcp = x_tcp + 1*h*ap(0);// + 1*h*h*ap(0);
-          y_tcp = y_tcp + 1*h*ap(1);// + 1*h*h*ap(1);
+          x_tcp = ap(0);// + 1*h*h*ap(0);
+          y_tcp = ap(1);// + 1*h*h*ap(1);
           
-          _x_tcp = _x_tcp;// + h*ap(0);// + 0*h*h*ap(0);
-          _y_tcp = _y_tcp;// + h*ap(1);
+          // _x_tcp = _x_tcp;// + h*ap(0);// + 0*h*h*ap(0);
+          // _y_tcp = _y_tcp;// + h*ap(1);
 
           }
           //vp(0)*(1)/1000.0;
