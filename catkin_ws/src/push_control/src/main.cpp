@@ -53,7 +53,7 @@ typedef struct thread_data{
     MatrixXd  *_Target;
     MatrixXd  *_u_control;
     MatrixXd  *_ap;
-    double  *_dpsi;
+    double  *_tang_vel ;
 
 } tdata_t;
 
@@ -76,7 +76,7 @@ void *rriMain(void *thread_arg)
     MatrixXd *pTarget = my_data->_Target;
     MatrixXd *pu_control = my_data->_u_control;
     MatrixXd *pap = my_data->_ap;
-    double *pdpsi = my_data->_dpsi;
+    double *ptang_vel = my_data->_tang_vel ;
 
     MatrixXd &q_slider = *pq_slider;
     MatrixXd &dq_slider = *pdq_slider;
@@ -84,7 +84,7 @@ void *rriMain(void *thread_arg)
     MatrixXd &Target = *pTarget;
     MatrixXd &u_control = *pu_control;
     MatrixXd &ap = *pap;
-    double &dpsi = *pdpsi;
+    double &tang_vel  = *ptang_vel ;
     pthread_mutex_unlock(&nonBlockMutex);
 
     //Define local variables
@@ -177,16 +177,17 @@ void *rriMain(void *thread_arg)
 
         //Assign new control input to shared variables
         pthread_mutex_lock(&nonBlockMutex);
-        if (minIndex==0){u_control = Stick.delta_u;}
+        if (minIndex==0){ u_control = Stick.delta_u; }
         else if (minIndex==1){  u_control = Up.delta_u;}
         else{   u_control = Down.delta_u;}
-        
+        // cout<< " u_control "<<u_control<<endl;
+        // 
         // Determine desired velocity of pusher
-        MatrixXd Output(4,1);
-        Output = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, u_control, dpsi);
-        ap(0) = Output(0);
-        ap(1) = Output(1);
-        dpsi  = Output(3);
+        // MatrixXd Output(4,1);
+        // Output = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel );
+        // ap(0) = Output(0);
+        // ap(1) = Output(1);
+        // tang_vel   = Output(3);
         
         pthread_mutex_unlock(&nonBlockMutex);
 
@@ -405,6 +406,7 @@ main(int argc,  char *argv[])
     MatrixXd _dq_slider_(3,1);
     MatrixXd smoothed_dq_slider(3,1);
     MatrixXd _q_pusher_(2,1);
+    MatrixXd _q_pusher_sensor(2,1);
     MatrixXd _Target_(2,1);
     MatrixXd _u_control_(4,1);
     MatrixXd vo_des(3,1);
@@ -452,7 +454,7 @@ main(int argc,  char *argv[])
     thread_data_array[0]._Target = &Target;
     thread_data_array[0]._u_control = &u_control;
     thread_data_array[0]._ap = &ap;
-    thread_data_array[0]._dpsi = &tang_vel;
+    thread_data_array[0]._tang_vel  = &tang_vel;
         
     // Create socket and wait for robot's connection
     UDPSocket* EGMsock;
@@ -490,9 +492,13 @@ main(int argc,  char *argv[])
     {
         tmp++;
         //Read robot position
+        // cout << " In first loop" << endl;
+        // cout << " tmp " << tmp << endl;
+        // cout << " has_vicon_pos "<< has_vicon_pos << endl;
+        // cout << " has_robot "    << has_robot << endl;
+        // cout << " ros::ok() " << ros::ok() << endl;
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
-            // cout << " In first loop" << endl;
-            has_robot = true;
+                        has_robot = true;
             //CreateSensorMessageEmpty(pSensorMessage);
             CreateSensorMessage(pSensorMessage,0.23,-0.04);
             pSensorMessage->SerializeToString(&messageBuffer);
@@ -545,7 +551,7 @@ main(int argc,  char *argv[])
     //Read Vicon and Initialize Variables
     theta = q_slider(2);
 
-    Target << .5,-0.040;
+    Target << 2.5,-0.040;
     q_pusher(0) = x_tcp;
     q_pusher(1) = y_tcp;
 
@@ -555,18 +561,21 @@ main(int argc,  char *argv[])
     
     for(int i=0;i<1000;i++){
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
-            // cout << " In second loop" << endl;
+            
             has_robot = true;
             CreateSensorMessageEmpty(pSensorMessage);
             //CreateSensorMessage(pSensorMessage,0.4,-0.04);
             pSensorMessage->SerializeToString(&messageBuffer);
             EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         }
+        // cout << " In second loop" << endl;
+        // cout << " i " << i << endl;
         usleep(4e3);
     }
     
     // cout << " Second loop terminated" << endl;
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
+            _q_pusher_sensor<<_x_tcp,_y_tcp;
             // cout<< "********************************"<<endl;
             // printf("getRobotPose %f %f %f\n", _x_tcp, _y_tcp, _z_tcp);
             // cout<< "*******************************"<<endl;
@@ -591,6 +600,7 @@ main(int argc,  char *argv[])
 
         if (i==0){t_ini = gettime();}
         time = gettime()- t_ini;
+        // cout << " In third loop" << endl;
 
         //**********************  Get State of robot and object from ROS *********************************
 
@@ -602,8 +612,9 @@ main(int argc,  char *argv[])
        // if (i % 1==0){
            // qo_des = q_slider;
            // vo_des = dq_slider;
-           // if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
-            // }         
+       if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
+           _q_pusher_sensor<<_x_tcp,_y_tcp;
+        }         
         // }
         
         //Lock Mutex
@@ -634,26 +645,42 @@ main(int argc,  char *argv[])
         _q_pusher_ = q_pusher;
         _Target_ = Target;
         _u_control_ = u_control;
-        cout<< " _u_control_ "<< _u_control_<<endl;
+        // cout<< " _u_control_ "<< _u_control_<<endl;
         pthread_mutex_unlock(&nonBlockMutex);
         //**********************************************************************************
-
+        double h = 1.0f/1000;
         //wait for 1 sec before starting position control 
         if (time<=1)
-          {x_tcp = x_tcp;}
+          {x_tcp = x_tcp;
+                        // cout << " In first condition "  << endl;
+          // cout << " time "  <<time<< endl;
+          }
+
+        // else if (time>=1 and time <=1.3)
+        // {    vp(0) = 0.05;
+             // vp(1) = 0;
+        // x_tcp = x_tcp + h*vp(0) ;
+        // y_tcp = y_tcp + h*vp(1);
+        // }
         else
         {
-
+        // cout << " In third condition "  << endl;
+                // cout << " time "  <<time<< endl;
         // Print desired output
-        printf(" %f %f %f %f %f %f %f %f %f\n", time, q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), x_tcp, y_tcp);
+        MatrixXd Output(4,1);
+        Output = inverse_dynamics2(_q_pusher_sensor, _q_slider_, _dq_slider_, u_control, tang_vel);
+        ap(0) = Output(0);
+        ap(1) = Output(1);
+        tang_vel   = Output(3);
+        
                
-        double h = 1.0f/1000;
-        vp(0) = vp(0) + h*ap(0);
-        vp(1) = vp(1) + h*ap(1);
+        vp(0) = vp(0) + 1*h*ap(0);
+        vp(1) = vp(1) + 1*h*ap(1);
         // cout << " vp "  << vp << endl;
         // cout << " ap "  << ap << endl;
-        x_tcp = x_tcp + h*vp(0) + 1*h*h*ap(0);
-        y_tcp = y_tcp + h*vp(1) + 1*h*h*ap(1);
+        x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
+        y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
+        printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), time);
 
           }
 

@@ -101,9 +101,6 @@ void Push::build_model()
 
 	model.update();
 	model.getEnv().set(GRB_IntParam_OutputFlag,0);
-//	c1[1].set(GRB_DoubleAttr_RHS, 2.0);
-//	cout<<"Print Constraints"<<endl;
-//	double e[] = model.getConstrs();
 
 };
 
@@ -115,10 +112,6 @@ void Push::update_model(MatrixXd qs, MatrixXd vs, MatrixXd qp, MatrixXd Target)
 	q_pusher  = qp;
 	theta     = q_slider(2);
 	dtheta = dq_slider(2);
-
-//	cout<<log(mycomplex)<<endl;
-//	cout<<log(mycomplex)<<endl;
-//	theta_rel << mycomplex;
 
 	Cbi << cos(theta), sin(theta), 0, -sin(theta), cos(theta), 0, 0, 0, 1;
 
@@ -138,6 +131,21 @@ void Push::update_model(MatrixXd qs, MatrixXd vs, MatrixXd qp, MatrixXd Target)
 	vc << Cci.topLeftCorner(2,2)*dq_slider.topLeftCorner(2,1);
 	dxc << vc(0);
 	dyc << vc(1);
+        
+        //Find psi
+        double xp = q_pusher(0);
+        double yp = q_pusher(1);
+        double x = q_slider(0);
+        double y = q_slider(1);
+        
+        MatrixXd ripb(3,1);
+        MatrixXd rbpb(3,1);
+        
+        ripb << xp-x,yp-y,0;
+	rbpb = Cbi*ripb;
+	rbpb(0) = -0.045; //force value to be half length of square
+        
+        psi =rbpb(1);
 
 
 
@@ -147,7 +155,19 @@ void Push::update_model(MatrixXd qs, MatrixXd vs, MatrixXd qp, MatrixXd Target)
 	x_sensor << x_ref(0), x_ref(1), theta_rel, psi, dxc, dyc, dtheta;
 
 	delta_x_temp = x_sensor -x_ref;
-        cout << " delta_x " << delta_x_temp;
+	delta_x_temp = delta_x_temp*1;
+        
+        // cout << " gi " << gi<<endl;
+        // cout << " gb " << gb<<endl;
+        // cout << " Target " << Target<<endl;
+        // cout << " q_pusher " << q_pusher<<endl;
+        // cout << " q_slider " << q_slider<<endl;
+        // cout << " dq_slider " << dq_slider<<endl;
+        // 
+        // cout << " x_sensor " << x_sensor<<endl;
+        // cout << " x_ref " << x_ref<<endl;
+        // cout << " delta_x " << delta_x_temp<<endl;
+        
 	for (int i=0;i<7;i++){
 		for (int j=0;j<7;j++){
 			A_bar_temp(i,j) = Abar[i][j]; }}
@@ -161,7 +181,6 @@ void Push::update_model(MatrixXd qs, MatrixXd vs, MatrixXd qp, MatrixXd Target)
 	for (int i=0;i<7;i++){
 		constr[num_ineq_constraints+i].set(GRB_DoubleAttr_RHS, b_temp(i)*1);
 	}
-
 };
 
 double Push::optimize()
@@ -186,8 +205,7 @@ double Push::optimize()
 
 
 	for (int i=0;i<4;i++){delta_u(i,0) = solution[i];}
-
-//	delta_u(0,0) = solution[0];
+        // cout << " u " << solution<<endl;
 //	cout << "********************************************"<<endl;
 
 return objval;
@@ -233,7 +251,7 @@ MatrixXd Push::inverse_dynamics()
 
 	w_i = Cbi.transpose()*w_b;
 	r_pb_b = Cbi*r_pb_i;
-	double psi =r_pb_b(2);
+	double psi =r_pb_b(1);
 
 //	cout <<Cbi<<endl;
 ////
@@ -671,7 +689,7 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
         
 	w_i = Cbi.transpose()*w_b;
 	rbpb = Cbi*ripb;
-        
+        rbpb(0) = -0.045;
         
         //Define variables
 	double psi =rbpb(1);
@@ -794,10 +812,12 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
         MatrixXd Eye(2,2);
         MatrixXd ddq(3,1);
         MatrixXd ao(3,1);
+        MatrixXd an(3,1);
+        MatrixXd at(3,1);
         MatrixXd vp_temp(3,1);
         Eye << 1,0,0,1;
 
-	double cn   = u(0)*1+3.6155;//6155;////3.6155;
+	double cn   = u(0)*1+3.6155;////3.6155;
 	double beta1= u(1)*1;
 	double beta2= u(2)*1;
 	double dpsi = u(3)*1;
@@ -810,37 +830,46 @@ MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sli
         vbpb << 0,dpsi,0;
 
         // aipi = aibi;
-        aipi = aibi + Cbi.transpose()*abpb + Cbi.transpose()*cross_op(dwbbi)*rbpb*1 + 2*Cbi.transpose()*cross_op(wbbi)*vbpb + Cbi.transpose()*cross_op(wbbi)*cross_op(wbbi)*rbpb;
-        
-        
+        aipi = aibi+ Cbi.transpose()*abpb + Cbi.transpose()*cross_op(dwbbi)*rbpb*1 + 2*Cbi.transpose()*cross_op(wbbi)*vbpb + Cbi.transpose()*cross_op(wbbi)*cross_op(wbbi)*rbpb;
+        // cout<< " psi "<< psi<<endl;
+        // cout<< " dpsi "<< dpsi<<endl;
+        // cout<< " tang_vel "<< tang_vel<<endl;
+        // cout<< " aibi "<< aipi<<endl;
+        // cout<< " aipi "<< aipi<<endl;
+        // cout<< " u "<< u<<endl;
+        // cout<< " Cbi "<< Cbi<<endl;
+        // cout<< " abpb "<< abpb<<endl;
+        // cout<< " dwbbi "<< dwbbi<<endl;
+        // cout<< " wbbi "<< wbbi<<endl;
+        // 
         
         aipi<<0.05,0,0;
-        // printf(" %f %f %f %f %f %f %f %f %f\n", aipi(0), aipi(1),wbbi(2),dwbbi(2));
-        cout<< " q_slider "<< q_slider<<endl;
-        cout<< " dq_slider "<< dq_slider<<endl;
-        cout<< " psi "<< psi<<endl;
-        cout<< " q_pusher "<< q_pusher<<endl;
-        cout<< "  "<< endl;
-
-        cout<< " cn "<< cn<<endl;
-        cout<< " beta1 "<< beta1<<endl;
-        cout<< " beta2 "<< beta2<<endl;
-        cout<< " dpsi "<< dpsi<<endl;
-        cout<< "  "<< endl;
+        printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f ", cn, beta1, beta2, dpsi, x, y, xp, yp, psi, v_i(0), v_i(1), aibi(0), aibi(1), abpb(0), abpb(1), wbbi(2), dwbbi(2), rbpb(0), rbpb(1), vbpb(0), vbpb(1), aipi(0), aipi(1), aipi(2), f_friction(0), f_friction(1), f_friction(2));
+        // cout<< " q_slider "<< q_slider<<endl;
+        // cout<< " dq_slider "<< dq_slider<<endl;
+        // cout<< " psi "<< psi<<endl;
+        // cout<< " q_pusher "<< q_pusher<<endl;
+        // cout<< "  "<< endl;
+// 
+        // cout<< " cn "<< cn<<endl;
+        // cout<< " beta1 "<< beta1<<endl;
+        // cout<< " beta2 "<< beta2<<endl;
+        // cout<< " dpsi "<< dpsi<<endl;
+        // cout<< "  "<< endl;
+        // 
+        // cout<< " rbpb "<< rbpb<<endl;
+        // cout<< " vbpb "<< vbpb<<endl;
+        // cout<< "  "<< endl;
         
-        cout<< " rbpb "<< rbpb<<endl;
-        cout<< " vbpb "<< vbpb<<endl;
-        cout<< "  "<< endl;
-        
-        cout<< " forces "<< (f_friction + n*cn + d1*beta1 + d2*beta2 )<<endl;
-        cout<< " f_friction "<< f_friction<<endl;
-        cout<< " control forces "<< n*cn + d1*beta1 + d2*beta2<<endl;
-        cout<< "  "<< endl;
-        
-        cout<< " n "<< n<<endl;
-        cout<< " d1 "<< d1<<endl;
-        cout<< " d2 "<< d2<<endl;
-        cout<< "  "<< endl;
+        // cout<< " forces "<< (f_friction + n*cn + d1*beta1 + d2*beta2 )<<endl;
+        // cout<< " f_friction "<< f_friction<<endl;
+        // cout<< " control forces "<< n*cn + d1*beta1 + d2*beta2<<endl;
+        // cout<< "  "<< endl;
+        // 
+        // cout<< " n "<< n<<endl;
+        // cout<< " d1 "<< d1<<endl;
+        // cout<< " d2 "<< d2<<endl;
+        // cout<< "  "<< endl;
         
 
         
