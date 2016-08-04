@@ -59,8 +59,8 @@ typedef struct thread_data{
 
 struct thread_data thread_data_array[1];
 
-// Start Thread
-//This thread builds and solves the quadratic program and returns the desired control force
+/////////////////////////////////////////////////////////////////////
+/////////////////////// QP Solver /////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 void *rriMain(void *thread_arg)
 {
@@ -153,9 +153,7 @@ void *rriMain(void *thread_arg)
         time = gettime()- t_ini;      
 
         //Read state of robot and object from shared variables
-        pthread_mutex_lock(&nonBlockMutex);
-        // cout<<" Thread "<<" q_slider "<<_q_slider_<< " dq_slider" << _dq_slider_<<" q_pusher"<< _q_pusher_<<endl;
-        
+        pthread_mutex_lock(&nonBlockMutex);       
         _q_slider_ = q_slider;
         _dq_slider_= dq_slider;
         _q_pusher_= q_pusher;
@@ -180,8 +178,6 @@ void *rriMain(void *thread_arg)
         if (minIndex==0){ u_control = Stick.delta_u; }
         else if (minIndex==1){  u_control = Up.delta_u;}
         else{   u_control = Down.delta_u;}
-        // cout<< " u_control "<<u_control<<endl;
-        // 
         // Determine desired velocity of pusher
         // MatrixXd Output(4,1);
         // Output = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel );
@@ -190,7 +186,6 @@ void *rriMain(void *thread_arg)
         // tang_vel   = Output(3);
         
         pthread_mutex_unlock(&nonBlockMutex);
-
         counter++;
 
         }
@@ -224,9 +219,6 @@ void CreateSensorMessage(EgmSensor* pSensorMessage, float x, float y)
     EgmCartesian *pc = new EgmCartesian();
     //float z = 0.221;  //pu
     float z = 0.230;  //plywood
-    // x = 0.4;
-    // y = -0.03;
-    // z = 0.25;
     if(x > 0.5) x = 0.5;
     if(x < 0.15) x = 0.15;
     if(y > 0.2) y = 0.2;
@@ -234,17 +226,11 @@ void CreateSensorMessage(EgmSensor* pSensorMessage, float x, float y)
     pc->set_x(x*1000);    // convert to robot representation mm
     pc->set_y(y*1000);          
     pc->set_z(z*1000);
-    //printf("*********Commands Sent to Robot***********\n");
-    //printf("%f %f %f\n", x, y, z);
-    //printf("******************************t***********\n");
     EgmQuaternion *pq = new EgmQuaternion();
     pq->set_u0(0);   // need to fill in 
     pq->set_u1(0);
     pq->set_u2(1);
     pq->set_u3(0);
-    
-    // cout<< "x_send"<<x<<endl;
-    //cout<< "y"<<y<<endl;
 
     EgmPose *pcartesian = new EgmPose();
     pcartesian->set_allocated_orient(pq);
@@ -288,29 +274,6 @@ void DisplayRobotMessage(EgmRobot *pRobotMessage, double& x, double& y, double& 
         printf("No header\n");
     }
 }
-
-// need mutex to protect
-// float object_pose[7];
-// bool has_object_pose = false;
-// float viconworld_pose[7];
-// tf::Transform  vicon_T_object;
-// bool has_vicon_to_world = false;
-// void tfCallback(const tf_msgs::TFMessage::ConstPtr& msg){
-    // string targetTF = "vicon/StainlessSteel/StainlessSteel";
-    // 
-    // if (msg->transforms[0].child_frame_id == string("/viconworld")){
-        // tf::transformMsgToTF(msg->transforms[0].transform, vicon_T_object);
-        // 
-    // }
-    // 
-    // else if (msg->transforms[0].child_frame_id == targetTF && has_vicon_to_world){
-        // has_object_pose = true;
-        // 
-        // tf::Transform  vicon_T_object;
-        // tf::transformMsgToTF(msg->transforms[0].transform, world_T_vicon);
-        // world_T_vicon
-    // }
-// }
 
 bool getRobotPose(UDPSocket* EGMsock, string& sourceAddress, unsigned short& sourcePort, EgmRobot* pRobotMessage, double& robot_x, double& robot_y, double& robot_z){
     int recvMsgSize;
@@ -365,19 +328,6 @@ bool getViconVel(MatrixXd& dq_slider, TransformListener& listener){
     }
     return false;
 }
-
-// void* runEGMTread(void* robot){
-    // robot->ActivateEGM();
-// }
-// 
-// void startEGM(RobotComm* robot){
-    // pthread_t* pThread = new pthread_t();
-    // pthread_attr_t attrR;
-    // pthread_attr_init(&attrR);
-    // pthread_attr_setdetachstate(&attrR, PTHREAD_CREATE_JOINABLE);
-    // 
-    // pthread_create(pThread, &attrR, runEGMTread, (void*) robot) ;
-// }
 
 //********************************************************************
 // Main Program
@@ -467,18 +417,7 @@ main(int argc,  char *argv[])
     EgmRobot *pRobotMessage = new EgmRobot();
     string messageBuffer;
     
-    
-    //Move the robot to the starting position
-    //RobotComm robot(&n, "2");
-    //robot.SetSpeed(60, 40);
-    
-    //robot.SetCartesian(230, 40, 230, 0, 0, 1, 0); //x,y,z (mm), qw, qx,qy,qz
-    
-    
-    //startEGM(&robot);
-    
     //Initialize Vicon and robot data collection
-        
     int tmp = 0;
     int lv1 = 0;
     double xs_old=0, xs=0,dxs=0;
@@ -486,9 +425,7 @@ main(int argc,  char *argv[])
     double thetas_old=0, thetas=0, dthetas=0;
     double h1=1.0f/1000;
 
-    // !has_robot ||
     while((!has_robot || !has_vicon_pos || tmp < 3000) && ros::ok())
-    //while(ros::ok())
     {
         tmp++;
         //Read robot position
@@ -506,8 +443,6 @@ main(int argc,  char *argv[])
         }
         if(getViconPose(q_slider, listener))
             has_vicon_pos = true;
-        // if(getViconVel(dq_slider, listener))
-            // has_vicon_vel = true;
         xs_old = xs;
         ys_old = ys;
         thetas_old = thetas; 
@@ -519,30 +454,7 @@ main(int argc,  char *argv[])
         dq_slider(0) = (xs-xs_old)/h1;
         dq_slider(1) = (ys-ys_old)/h1;
         dq_slider(2) = (thetas-thetas_old)/h1;
-            
-        // h1 = 4e3/(1e6);
-            
-        // if (!has_vicon_pos){
-        // xs_old = q_slider(0);
-        // ys_old = q_slider(1);
-        // thetas_old = q_slider(2);}
-        // else{
-        // xs_old = xs;
-        // ys_old = ys;
-        // thetas_old = thetas;
-        // }
 
-        // xs     = smooth( q_slider(0),  0.00,  xs);
-        // ys     = smooth( q_slider(1),  0.00,  ys);
-        // thetas = smooth( q_slider(2),  0.00,  thetas);
-        // 
-        // dxs = (xs-xs_old)/(h1);
-        // dys = (ys-ys_old)/(h1);
-        // dthetas = (thetas-thetas_old)/(h1);
-        
-        // printf("RobotPose %f %f %f\n", x_tcp, y_tcp, z_tcp);
-        // printf(" %d %f %f %f %f %f %f %f %f\n", lv1, q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), x_tcp, y_tcp);
-        // dq_slider=-dq_slider;
         lv1+=1;
         usleep(4e3);
     }
@@ -564,23 +476,15 @@ main(int argc,  char *argv[])
             
             has_robot = true;
             CreateSensorMessageEmpty(pSensorMessage);
-            //CreateSensorMessage(pSensorMessage,0.4,-0.04);
             pSensorMessage->SerializeToString(&messageBuffer);
             EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         }
-        // cout << " In second loop" << endl;
-        // cout << " i " << i << endl;
         usleep(4e3);
     }
     
     // cout << " Second loop terminated" << endl;
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
             _q_pusher_sensor<<_x_tcp,_y_tcp;
-            // cout<< "********************************"<<endl;
-            // printf("getRobotPose %f %f %f\n", _x_tcp, _y_tcp, _z_tcp);
-            // cout<< "*******************************"<<endl;
-            //pSensorMessage->SerializeToString(&messageBuffer);
-            //EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
             
         }
     
@@ -603,26 +507,11 @@ main(int argc,  char *argv[])
         // cout << " In third loop" << endl;
 
         //**********************  Get State of robot and object from ROS *********************************
-
-        // pthread_mutex_lock(&nonBlockMutex);
-       // _x_tcp = x_tcp;
-       // _y_tcp = y_tcp;
-
-       // Use this section for simulation purposes
-       // if (i % 1==0){
-           // qo_des = q_slider;
-           // vo_des = dq_slider;
        if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
            _q_pusher_sensor<<_x_tcp,_y_tcp;
         }         
-        // }
         
-        //Lock Mutex
         pthread_mutex_lock(&nonBlockMutex);
-        // _x_tcp = x_tcp;
-        // _y_tcp = y_tcp;
-
-        /* Get Pose and velocity of sliding object */
         getViconPose(q_slider, listener);
         xs_old = xs;
         ys_old = ys;
@@ -645,7 +534,6 @@ main(int argc,  char *argv[])
         _q_pusher_ = q_pusher;
         _Target_ = Target;
         _u_control_ = u_control;
-        // cout<< " _u_control_ "<< _u_control_<<endl;
         pthread_mutex_unlock(&nonBlockMutex);
         //**********************************************************************************
         double h = 1.0f/1000;
@@ -668,7 +556,7 @@ main(int argc,  char *argv[])
                 // cout << " time "  <<time<< endl;
         // Print desired output
         MatrixXd Output(4,1);
-        Output = inverse_dynamics2(_q_pusher_sensor, _q_slider_, _dq_slider_, u_control, tang_vel);
+        Output = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel);
         ap(0) = Output(0);
         ap(1) = Output(1);
         tang_vel   = Output(3);
@@ -676,8 +564,6 @@ main(int argc,  char *argv[])
                
         vp(0) = vp(0) + 1*h*ap(0);
         vp(1) = vp(1) + 1*h*ap(1);
-        // cout << " vp "  << vp << endl;
-        // cout << " ap "  << ap << endl;
         x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
         y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
         printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), time);
@@ -694,7 +580,6 @@ main(int argc,  char *argv[])
     }
     
     (void) pthread_join(rriThread, NULL);
-    //cout<< "End of Program"<<endl;
 
     return 0;
 }
