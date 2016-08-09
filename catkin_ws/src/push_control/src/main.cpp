@@ -29,6 +29,7 @@
 #include <tf/transform_datatypes.h>
 #include <tf/transform_listener.h>
 #include "geometry_msgs/Twist.h"
+#include "std_msgs/String.h"
 
 using namespace abb::egm;
 using namespace tf;
@@ -205,6 +206,11 @@ uint32_t GetTickCount(void)
 
 
 //////////////////////////////////////////////////////////////////////////
+void chatterCallback(const std_msgs::String::ConstPtr& msg)
+{
+    // cout<< " Subscriber "<<endl;
+    ROS_INFO("I heard: [%s]", msg->data.c_str());
+}
 // Create a simple robot message
 void CreateSensorMessage(EgmSensor* pSensorMessage, float x, float y)
 { 
@@ -298,6 +304,23 @@ bool getRobotPose(UDPSocket* EGMsock, string& sourceAddress, unsigned short& sou
     return false;
 }
 
+// bool getFT(MatrixXd& ftWrench){
+    // try{
+        // listener.lookupTransform("map", "vicon/StainlessSteel/StainlessSteel", ros::Time(0), obj_pose);
+        // tf::Quaternion q = obj_pose.getRotation();
+        // tf::Matrix3x3 m(q);
+        // double roll, pitch, yaw;
+        // m.getRPY(roll, pitch, yaw);
+        // 
+        // q_slider << obj_pose.getOrigin().getX(), obj_pose.getOrigin().getY()+ 0.018, yaw;
+        // return true;
+    // }
+    // catch (tf::TransformException ex){
+       // //ROS_ERROR("%s",ex.what());
+    // }
+    // return false;
+// }
+
 bool getViconPose(MatrixXd& q_slider, TransformListener& listener){
     tf::StampedTransform obj_pose;
     try{
@@ -339,6 +362,7 @@ main(int argc,  char *argv[])
     ros::NodeHandle n;
     tf::TransformListener listener;
     //ros::Subscriber sub = n.subscribe("/tf", 1, tfCallback);
+
 
     // Declare Matrix variables
     MatrixXd q_pusher(2,1);
@@ -544,35 +568,44 @@ main(int argc,  char *argv[])
           // cout << " time "  <<time<< endl;
           }
 
-        // else if (time>=1 and time <=1.3)
-        // {    vp(0) = 0.05;
-             // vp(1) = 0;
-        // x_tcp = x_tcp + h*vp(0) ;
-        // y_tcp = y_tcp + h*vp(1);
-        // }
+        else if (time>=1 and time <=1.3)
+        {    vp(0) = 0.05;
+             vp(1) = 0;
+        x_tcp = x_tcp + h*vp(0);
+        y_tcp = y_tcp + h*vp(1);
+        }
         else
         {
-        // cout << " In third condition "  << endl;
-                // cout << " time "  <<time<< endl;
-        // Print desired output
         MatrixXd Output(4,1);
-        Output = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel);
+        Output = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel, time);
         ap(0) = Output(0);
         ap(1) = Output(1);
         tang_vel   = Output(3);
         
-               
-        vp(0) = vp(0) + 1*h*ap(0);
-        vp(1) = vp(1) + 1*h*ap(1);
-        x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
-        y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
-        printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), time);
+        // Controller 1
+        // vp(0) = vp(0) + 1*h*ap(0);
+        // vp(1) = vp(1) + 1*h*ap(1);
+        // x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
+        // y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
+        
+        // cout<< " Subscriber "<<endl;
+        // ros::Subscriber sub = n.subscribe("netft_data", 1000, chatterCallback);
+        // ros::spin();
+        
+        // Controller 1
+        vp(0) = 0.05;
+        vp(1) = 0.0;
+        x_tcp = x_tcp + h*vp(0);
+        y_tcp = y_tcp + h*vp(1);
+        // printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f \n", q_slider(0), ros::spin();q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1));
 
           }
 
         // Send robot commands
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
         pSensorMessage->SerializeToString(&messageBuffer);
+        
+        
         EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         
         //Sleep for 1000Hz loop
