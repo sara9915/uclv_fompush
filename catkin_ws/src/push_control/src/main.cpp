@@ -14,6 +14,8 @@
 #include <memory>
 #include <cstdlib>
 #include "pushing.h"
+// #include "ABBRobot.h"
+#include "add.h"
 #include <time.h>
 #include <iomanip>
 #include <sys/time.h>
@@ -29,12 +31,11 @@
 #include <tf/transform_datatypes.h>
 #include <tf/transform_listener.h>
 #include "geometry_msgs/Twist.h"
+#include "geometry_msgs/WrenchStamped.h"
 #include "std_msgs/String.h"
 
 using namespace abb::egm;
 using namespace tf;
-
-//
 using namespace std;
 using Eigen::MatrixXd;
 
@@ -43,7 +44,7 @@ const int num_ineq_constraints = NUM_INEQ_CONSTRAINTS;
 const int num_eq_constraints = NUM_EQ_CONSTRAINTS;
 const int num_variables = NUM_VARIABLES;
 const int num_constraints = num_ineq_constraints+num_eq_constraints;
-
+std::vector<geometry_msgs::WrenchStamped> ft_wrenches;
 pthread_mutex_t nonBlockMutex;
 
 // Define structure to send arguments to thread
@@ -60,12 +61,11 @@ typedef struct thread_data{
 
 struct thread_data thread_data_array[1];
 
-/////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 /////////////////////// QP Solver /////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 void *rriMain(void *thread_arg)
 {
-
     struct thread_data *my_data;
     my_data = (struct thread_data *) thread_arg;
 
@@ -206,11 +206,15 @@ uint32_t GetTickCount(void)
 
 
 //////////////////////////////////////////////////////////////////////////
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
+// void chatterCallback(const std_msgs::String::ConstPtr& msg)
+void chatterCallback(const geometry_msgs::WrenchStamped& msg_force)
 {
-    // cout<< " Subscriber "<<endl;
-    ROS_INFO("I heard: [%s]", msg->data.c_str());
+    geometry_msgs::WrenchStamped contact_wrench;
+    contact_wrench.wrench = msg_force.wrench;
+    ft_wrenches.push_back(contact_wrench);
+        
 }
+
 // Create a simple robot message
 void CreateSensorMessage(EgmSensor* pSensorMessage, float x, float y)
 { 
@@ -304,23 +308,6 @@ bool getRobotPose(UDPSocket* EGMsock, string& sourceAddress, unsigned short& sou
     return false;
 }
 
-// bool getFT(MatrixXd& ftWrench){
-    // try{
-        // listener.lookupTransform("map", "vicon/StainlessSteel/StainlessSteel", ros::Time(0), obj_pose);
-        // tf::Quaternion q = obj_pose.getRotation();
-        // tf::Matrix3x3 m(q);
-        // double roll, pitch, yaw;
-        // m.getRPY(roll, pitch, yaw);
-        // 
-        // q_slider << obj_pose.getOrigin().getX(), obj_pose.getOrigin().getY()+ 0.018, yaw;
-        // return true;
-    // }
-    // catch (tf::TransformException ex){
-       // //ROS_ERROR("%s",ex.what());
-    // }
-    // return false;
-// }
-
 bool getViconPose(MatrixXd& q_slider, TransformListener& listener){
     tf::StampedTransform obj_pose;
     try{
@@ -361,6 +348,7 @@ main(int argc,  char *argv[])
     ros::init(argc, argv, "push_control");
     ros::NodeHandle n;
     tf::TransformListener listener;
+    ros::Subscriber sub = n.subscribe("/netft_data", 1, chatterCallback);
     //ros::Subscriber sub = n.subscribe("/tf", 1, tfCallback);
 
 
@@ -449,12 +437,13 @@ main(int argc,  char *argv[])
     double thetas_old=0, thetas=0, dthetas=0;
     double h1=1.0f/1000;
 
-    while((!has_robot || !has_vicon_pos || tmp < 3000) && ros::ok())
+// !has_robot || !has_vicon_pos || 
+    while((tmp < 1) && ros::ok())
     {
         tmp++;
         //Read robot position
-        // cout << " In first loop" << endl;
-        // cout << " tmp " << tmp << endl;
+        cout << " In first loop" << endl;
+        cout << " tmp " << tmp << endl;
         // cout << " has_vicon_pos "<< has_vicon_pos << endl;
         // cout << " has_robot "    << has_robot << endl;
         // cout << " ros::ok() " << ros::ok() << endl;
@@ -495,9 +484,9 @@ main(int argc,  char *argv[])
     pthread_create(&rriThread, &attrR, rriMain, (void*) &thread_data_array[0]) ;
 
     
-    for(int i=0;i<1000;i++){
+    for(int i=0;i<1;i++){
+        cout << " In Second loop " << i << endl;
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
-            
             has_robot = true;
             CreateSensorMessageEmpty(pSensorMessage);
             pSensorMessage->SerializeToString(&messageBuffer);
@@ -506,7 +495,7 @@ main(int argc,  char *argv[])
         usleep(4e3);
     }
     
-    // cout << " Second loop terminated" << endl;
+    cout << " Second loop terminated" << endl;
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
             _q_pusher_sensor<<_x_tcp,_y_tcp;
             
@@ -522,18 +511,21 @@ main(int argc,  char *argv[])
     double dy_smooth=0;
     vp << 0,0;
     double _x_tcp_old = 0.0;
-    
+    //std::cout << "async spinner" << std::endl;
+    //async_spinner = new ros::AsyncSpinner(2);
+    //async_spinner->start();
+    // ros::Rate r(100); // 10 hz
 
     for (int i=0;i<15000  && ros::ok();i++){
 
         if (i==0){t_ini = gettime();}
         time = gettime()- t_ini;
-        // cout << " In third loop" << endl;
+        // cout << i << endl;
 
         //**********************  Get State of robot and object from ROS *********************************
-       if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
-           _q_pusher_sensor<<_x_tcp,_y_tcp;
-        }         
+       // if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
+           // _q_pusher_sensor<<_x_tcp,_y_tcp;
+        // }         
         
         pthread_mutex_lock(&nonBlockMutex);
         getViconPose(q_slider, listener);
@@ -590,10 +582,21 @@ main(int argc,  char *argv[])
         
         // cout<< " Subscriber "<<endl;
         // ros::Subscriber sub = n.subscribe("netft_data", 1000, chatterCallback);
-        // ros::spin();
+        ros::spinOnce();
+        // cout << ft_wrenches.back()<< endl;
+        
+        geometry_msgs::WrenchStamped contact_wrench;
+        contact_wrench =  ft_wrenches.back();
+        cout << contact_wrench.wrench.force.x << endl;
+        // cout << contact_wrench.wrench.force.y << endl;
+        // cout << contact_wrench.wrench.force.z << endl;
+        
+        // add2(1,2);
+        add(2,3);
+        
         
         // Controller 1
-        vp(0) = 0.05;
+        vp(0) = 0.00;
         vp(1) = 0.0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
@@ -602,16 +605,17 @@ main(int argc,  char *argv[])
           }
 
         // Send robot commands
-        CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
-        pSensorMessage->SerializeToString(&messageBuffer);
-        
-        
-        EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
+        // CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
+        // pSensorMessage->SerializeToString(&messageBuffer);
+        // 
+        // 
+        // EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         
         //Sleep for 1000Hz loop
         usleep(1000);
+        // r.sleep();
     }
-    
+     //async_spinner->stop();
     (void) pthread_join(rriThread, NULL);
 
     return 0;

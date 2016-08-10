@@ -1,66 +1,22 @@
 /*
- * add.h
-
-
-
-// This is start of the header guard.  ADD_H can be any unique name.  By convention, we use the name of the header file.
-
-
-
-// This is the content of the .h file, which is where the declarations go
- *
  */
 
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::ArrayXf;
 
-
 #define NUM_VARIABLES 385
 #define NUM_INEQ_CONSTRAINTS 630
 #define NUM_EQ_CONSTRAINTS 245
 #define NUM_CONSTRAINTS 875
 
-//#define NUM_VARIABLES 2
-//#define NUM_INEQ_CONSTRAINTS 1
-//#define NUM_EQ_CONSTRAINTS 1
-//#define NUM_CONSTRAINTS 2
-
 #ifndef PUSHING_H
 #define PUSHING_H
-//
+
 extern const int num_ineq_constraints;
 extern const int num_eq_constraints;
 extern const int num_variables;
 extern const int num_constraints;
-
-//extern double  Ain_stick[][NUM_VARIABLES];
-//extern double  Ain_up[][NUM_VARIABLES];
-//extern double  Ain_down[][NUM_VARIABLES];
-//extern double  Aeq_stick[][NUM_VARIABLES];
-//extern double  Aeq_up[][NUM_VARIABLES];
-//extern double  Aeq_down[][NUM_VARIABLES];
-
-//extern double  Aeq[][NUM_VARIABLES];
-//extern double  beq[];
-//extern double  Ain[][NUM_VARIABLES];
-//extern double  bin[];
-
-//extern double  A_stick[][NUM_VARIABLES];
-//extern double  A_up[][NUM_VARIABLES];
-//extern double  A_down[][NUM_VARIABLES];
-//
-//extern double  b_stick[];
-//extern double  b_up[];
-//extern double  b_down[];
-//
-//extern double  bin_stick[];
-//extern double  bin_up[];
-//extern double  bin_down[];
-//
-//extern double  beq_stick[];
-//extern double  beq_up[];
-//extern double  beq_down[];
 
 class Push {
 
@@ -102,11 +58,8 @@ class Push {
 	char    *_Abar_str;
 	int _index;
 
-
-	//GRBEnv env  = GRBEnv();
-    GRBEnv env;
+        GRBEnv env;
 	GRBModel model;
-    //GRBModel& model(env);
 	GRBVar* vars;
 	GRBLinExpr lhs;
 	GRBConstr constr[NUM_CONSTRAINTS] ;
@@ -165,32 +118,13 @@ public:
 	MatrixXd inverse_dynamics();
 	MatrixXd delta_u;
 
-
 };
 
-
-
-int add(int x, int y); // function prototype for add.h -- don't forget the semicolon!
-
-//void read_array(double *pArray, int rows, int cols); // Read array from text file
-
-MatrixXd cross_op(MatrixXd w); // Build cross square skew symmetric matrix
-//
-//void stack_A_arrays(double *A, double *Ain, double *Aeq, int num_ineq_constraints, int num_eq_constraints, int num_variables); //stack matrices A and Aeq
-//
-//void stack_b_arrays(double *b, double *bin, double *beq, int num_ineq_constraints, int num_eq_constraints, int num_variables); // stack b, beq matrices
-
-//void print_square_array(double *A, int rows, int cols); //print square matrix
-//
-//void print_array(double *A, int rows);
-
-//void read_array1(FILE* myFile, int num_rows, int num_cols, double *A); //Read array from text file
-
+MatrixXd cross_op(MatrixXd w);
 MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time);
 double gettime();
-double  smooth(double data, float filterVal, double smoothedVal);
+double smooth(double data, float filterVal, double smoothedVal);
 void write_file(FILE* myFile, int num_rows, int num_cols, double *A);
-
 #endif
 
 
