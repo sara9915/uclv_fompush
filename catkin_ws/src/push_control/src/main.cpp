@@ -141,6 +141,9 @@ main(int argc,  char *argv[])
     double ys_old=0, ys=0,dys=0 ;
     double thetas_old=0, thetas=0, dthetas=0;
     double h1=1.0f/1000;
+    geometry_msgs::WrenchStamped contact_wrench_ini;
+    geometry_msgs::WrenchStamped contact_wrench_bias;
+    MatrixXd contact_wrench(3,1);
 
     //First Loop
     while(!has_robot || !has_vicon_pos || (tmp < 2500) && ros::ok())
@@ -257,15 +260,18 @@ main(int argc,  char *argv[])
         pthread_mutex_unlock(&nonBlockMutex);
         //**********************************************************************************
         double h = 1.0f/1000;
+        ros::spinOnce();
+                
         //wait for 1 sec before starting position control 
         if (time<=1)
           {x_tcp = x_tcp;
-                        // cout << " In first condition "  << endl;
+          contact_wrench_ini = ft_wrenches.back();
+          // cout << " In first condition "  << endl;
           // cout << " time "  <<time<< endl;
           }
 
         else if (time>=1 and time <=1.3)
-        {    vp(0) = 0.00;
+        {    vp(0) = 0;
              vp(1) = 0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
@@ -283,21 +289,12 @@ main(int argc,  char *argv[])
         // vp(1) = vp(1) + 1*h*ap(1);
         // x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
         // y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
-        
-        ros::spinOnce();
-        geometry_msgs::WrenchStamped contact_wrench_ini;
-        geometry_msgs::WrenchStamped contact_wrench_bias;
-        MatrixXd contact_wrench(3,1);
-        
-        if (i<10)
-        {
-            contact_wrench_ini = ft_wrenches.back();
-            }
+               
         contact_wrench_bias = ft_wrenches.back();
         contact_wrench(0)=contact_wrench_bias.wrench.force.x - contact_wrench_ini.wrench.force.x; 
         contact_wrench(1)=contact_wrench_bias.wrench.force.y - contact_wrench_ini.wrench.force.y; 
         contact_wrench(2)=contact_wrench_bias.wrench.force.z - contact_wrench_ini.wrench.force.z; 
-        
+
         double fx, fy, fz;
         fx = -contact_wrench(1);
         fy = -contact_wrench(0);
@@ -305,12 +302,11 @@ main(int argc,  char *argv[])
         
         
         // Controller 2
-        vp(0) = 0.00;
+        vp(0) = 0.0;
         vp(1) = 0.0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
         printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f  %f %f %f  %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), fx, fy, fz, contact_wrench_bias.wrench.force.x, contact_wrench_bias.wrench.force.y, contact_wrench_bias.wrench.force.z, contact_wrench_ini.wrench.force.x, contact_wrench_ini.wrench.force.y, contact_wrench_ini.wrench.force.z);
-
           }
 
         // Send robot commands
