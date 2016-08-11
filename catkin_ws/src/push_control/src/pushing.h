@@ -18,6 +18,17 @@ extern const int num_eq_constraints;
 extern const int num_variables;
 extern const int num_constraints;
 
+// *****************************
+struct thread_data{
+    MatrixXd  *_q_pusher;
+    MatrixXd  *_q_slider;
+    MatrixXd  *_dq_slider;
+    MatrixXd  *_Target;
+    MatrixXd  *_u_control;
+    MatrixXd  *_ap;
+    double  *_tang_vel ;
+} ;
+
 class Push {
 
 	double  Aeq[NUM_EQ_CONSTRAINTS][NUM_VARIABLES];
@@ -120,11 +131,11 @@ public:
 
 };
 
-MatrixXd cross_op(MatrixXd w);
-MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time);
-double gettime();
-double smooth(double data, float filterVal, double smoothedVal);
-void write_file(FILE* myFile, int num_rows, int num_cols, double *A);
+// MatrixXd cross_op(MatrixXd w);
+// MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time);
+// double gettime();
+// double smooth(double data, float filterVal, double smoothedVal);
+// void write_file(FILE* myFile, int num_rows, int num_cols, double *A);
 #endif
 
 
