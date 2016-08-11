@@ -173,6 +173,7 @@ main(int argc,  char *argv[])
         dq_slider(1) = (ys-ys_old)/h1;
         dq_slider(2) = (thetas-thetas_old)/h1;
 
+        ros::spinOnce();
         lv1+=1;
         usleep(4e3);
     }
@@ -197,6 +198,7 @@ main(int argc,  char *argv[])
             pSensorMessage->SerializeToString(&messageBuffer);
             EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         }
+        ros::spinOnce();
         usleep(4e3);
     }
     // cout << " Second loop terminated" << endl;
@@ -263,7 +265,7 @@ main(int argc,  char *argv[])
           }
 
         else if (time>=1 and time <=1.3)
-        {    vp(0) = 0.05;
+        {    vp(0) = 0.00;
              vp(1) = 0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
@@ -283,17 +285,31 @@ main(int argc,  char *argv[])
         // y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
         
         ros::spinOnce();
-        geometry_msgs::WrenchStamped contact_wrench;
-        contact_wrench =  ft_wrenches.back();
-        // cout << contact_wrench.wrench.force.x << endl;
+        geometry_msgs::WrenchStamped contact_wrench_ini;
+        geometry_msgs::WrenchStamped contact_wrench_bias;
+        MatrixXd contact_wrench(3,1);
+        
+        if (i==1)
+        {
+            contact_wrench_ini = ft_wrenches.back();
+            }
+        contact_wrench_bias = ft_wrenches.back();
+        contact_wrench(0)=contact_wrench_bias.wrench.force.x - contact_wrench_ini.wrench.force.x; 
+        contact_wrench(1)=contact_wrench_bias.wrench.force.y - contact_wrench_ini.wrench.force.y; 
+        contact_wrench(2)=contact_wrench_bias.wrench.force.z - contact_wrench_ini.wrench.force.z; 
+        
+        double fx, fy, fz;
+        fx = -contact_wrench(1);
+        fy = -contact_wrench(0);
+        fz = -contact_wrench(2);
         
         
         // Controller 2
-        vp(0) = 0.05;
+        vp(0) = 0.00;
         vp(1) = 0.0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
-        printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1),contact_wrench.wrench.force.x,contact_wrench.wrench.force.y,contact_wrench.wrench.force.z);
+        printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f  %f %f %f  %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), fx, fy, fz, contact_wrench_bias.wrench.force.x, contact_wrench_bias.wrench.force.y, contact_wrench_bias.wrench.force.z, contact_wrench_ini.wrench.force.x, contact_wrench_ini.wrench.force.y, contact_wrench_ini.wrench.force.z);
 
           }
 
