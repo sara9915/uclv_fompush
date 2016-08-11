@@ -271,7 +271,7 @@ main(int argc,  char *argv[])
           }
 
         else if (time>=1 and time <=1.3)
-        {    vp(0) = 0.5;
+        {    vp(0) = 0.05;
              vp(1) = 0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
