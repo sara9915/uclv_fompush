@@ -271,7 +271,7 @@ main(int argc,  char *argv[])
           }
 
         else if (time>=1 and time <=1.3)
-        {    vp(0) = 0;
+        {    vp(0) = 0.5;
              vp(1) = 0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
@@ -279,7 +279,7 @@ main(int argc,  char *argv[])
         else
         {
         MatrixXd Output(4,1);
-        Output = inverse_dynamics2(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel, time);
+        Output = inverse_dynamics(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel, time);
         ap(0) = Output(0);
         ap(1) = Output(1);
         tang_vel   = Output(3);
@@ -302,7 +302,7 @@ main(int argc,  char *argv[])
         
         
         // Controller 2
-        vp(0) = 0.0;
+        vp(0) = 0.05;
         vp(1) = 0.0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);

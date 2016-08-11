@@ -24,7 +24,7 @@ using Eigen::MatrixXd;
 
 
 //********************************************************************************
-MatrixXd inverse_dynamics2(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time)
+MatrixXd inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time)
 {
         //Declare constant parameters
 	const double nu = 0.35;
