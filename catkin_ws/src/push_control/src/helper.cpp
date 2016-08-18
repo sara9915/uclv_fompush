@@ -23,7 +23,7 @@ using namespace std;
 using Eigen::MatrixXd;
 
 //********************************************************************************
-OutputData inverse_dynamics(double time, MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time)
+OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time)
 {
         //Declare constant parameters
 	const double nu = 0.35;
@@ -352,7 +352,7 @@ void write_file(FILE* myFile, int num_rows, int num_cols, double *A)
 
 }
 //******************
-void updateJSON_data(MatrixXd q_slider, MatrixXd dq_slider, double _x_tcp, double _y_tcp, double x_tcp, double y_tcp, MatrixXd vp, MatrixXd ap, double fx, double fy, double fz, struct OutputData Output){
+void updateJSON_data(double time, MatrixXd q_slider, MatrixXd dq_slider, double _x_tcp, double _y_tcp, double x_tcp, double y_tcp, MatrixXd vp, MatrixXd ap, double fx, double fy, double fz, struct OutputData Output){
         
         timeOut.append(time);
         qSliderxOut.append(q_slider(0));
