@@ -430,7 +430,7 @@ void outputJSON_file(){
         // JsonOutput["fzIni"] = fzIniOut;
         JsonOutput["cn"] = cnOut;
         JsonOutput["beta1"] = beta1Out;
-        JsonOutput["beat2"] = beta2Out;
+        JsonOutput["beta2"] = beta2Out;
         JsonOutput["dpsi"] = dpsiOut;
         JsonOutput["psi"] = psiOut;
         JsonOutput["aoX"] = aoxOut;
