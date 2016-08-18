@@ -1,0 +1,12 @@
+Questions:
+0)Why is object pose going crazy?
+
+1) If you start from scratch, do you need to manually set camera position? (3d perspective view wrong)
+2) What is focal length?
+3) Masks: How long do you perform "create mask"
+4) Calibration: How do you know when it is completed?
+5) Vicon Frame: Didn't see marks on the table. Start, then set origin?
+
+Fine Vicon-Robot Calibration
+1) Why step 3 is important?
+2) 

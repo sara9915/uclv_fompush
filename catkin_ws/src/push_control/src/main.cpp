@@ -1,4 +1,7 @@
 // Include header files
+// #include <jsoncpp/json/json.h>
+#include <jsoncpp/json/writer.h>
+
 #include <iostream>
 #include <dlfcn.h>
 #include <vector>
@@ -60,6 +63,20 @@ main(int argc,  char *argv[])
     tf::TransformListener listener;
     ros::Subscriber sub = n.subscribe("/netft_data", 1, chatterCallback);
     
+   Json::Value event;   
+    Json::Value vec(Json::arrayValue);
+    vec.append(Json::Value(1));
+    vec.append(Json::Value(2));
+    vec.append(Json::Value(3));
+
+    event["competitors"]["home"]["name"] = "Liverpool";
+    event["competitors"]["away"]["code"] = 89223;
+    event["competitors"]["away"]["name"] = "Aston Villa";
+    event["competitors"]["away"]["code"]=vec;
+
+    std::cout << event << std::endl;
+
+     return 0;
     // Declare Matrix variables
     MatrixXd q_pusher(2,1);
     MatrixXd dq_pusher(2,1);
@@ -150,11 +167,11 @@ main(int argc,  char *argv[])
     {
         tmp++;
         //Read robot position
-        // cout << " In first loop" << endl;
-        // cout << " tmp " << tmp << endl;
-        // cout << " has_vicon_pos "<< has_vicon_pos << endl;
-        // cout << " has_robot "    << has_robot << endl;
-        // cout << " ros::ok() " << ros::ok() << endl;
+        cout << " In first loop" << endl;
+        cout << " tmp " << tmp << endl;
+        cout << " has_vicon_pos "<< has_vicon_pos << endl;
+        cout << " has_robot "    << has_robot << endl;
+        cout << " ros::ok() " << ros::ok() << endl;
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
                         has_robot = true;
             //CreateSensorMessageEmpty(pSensorMessage);
@@ -271,7 +288,7 @@ main(int argc,  char *argv[])
           }
 
         else if (time>=1 and time <=1.3)
-        {    vp(0) = 0.05;
+        {    vp(0) = 0.0;// 0.05
              vp(1) = 0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
@@ -302,12 +319,14 @@ main(int argc,  char *argv[])
         
         
         // Controller 2
-        vp(0) = 0.05;
+        vp(0) = 0.0;
         vp(1) = 0.0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
         printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f  %f %f %f  %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), fx, fy, fz, contact_wrench_bias.wrench.force.x, contact_wrench_bias.wrench.force.y, contact_wrench_bias.wrench.force.z, contact_wrench_ini.wrench.force.x, contact_wrench_ini.wrench.force.y, contact_wrench_ini.wrench.force.z);
           }
+          
+        
 
         // Send robot commands
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);

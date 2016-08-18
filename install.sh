@@ -34,6 +34,24 @@ if [ "$#" == 0 ] || [ "$1" == "VICON" ]; then
     catkin_make
 fi
 
+if [ "$#" == 0 ] || [ "$1" == "LCM" ]; then
+    cd $HOME/software
+    wget https://github.com/lcm-proj/lcm/releases/download/v1.2.1/lcm-1.2.1.zip
+    unzip lcm-1.2.1.zip
+    cd lcm-1.2.1
+    ./configure
+    make
+    sudo make install
+    sudo ldconfig
+fi
+
+if [ "$#" == 0 ] || [ "$1" == "LIBBOT" ]; then
+    cd $HOME/software
+    git clone https://github.com/RobotLocomotion/libbot.git
+    cd libbot
+    sudo make BUILD_PREFIX=/usr/local
+fi
+
 if [ "$#" == 0 ] || [ "$1" == "APT" ]; then
     echo "Install useful packages from apt-get"
     sudo apt-get update
@@ -240,6 +258,7 @@ fi
 
 
 if [ "$#" == 0 ] || [ "$1" == "ABB" ]; then
+    git submodule update --init $HOME/cpush/ros_ws/abb-ros
     echo "Make abb-ros"
     rosmake robot_comm robot_node
 fi

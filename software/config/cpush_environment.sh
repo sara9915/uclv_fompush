@@ -26,6 +26,7 @@ set_cpush_base()
 setup_cpush()
 {
   export PATH=$PATH:$CPUSH_BASE/software/build/bin
+  export PATH=$PATH:$HOME/software/libbot/build/bin  # for lcm and libbot install
   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
   export LD_LIBRARY_PATH=$CPUSH_BASE/software/build/lib:$CPUSH_BASE/software/build/lib64:$LD_LIBRARY_PATH
   export LD_LIBRARY_PATH=$HOME/software/gurobi651/linux64/lib:$LD_LIBRARY_PATH  # for gurobi
