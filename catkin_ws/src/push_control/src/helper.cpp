@@ -23,7 +23,7 @@ using namespace std;
 using Eigen::MatrixXd;
 
 //********************************************************************************
-OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time)
+OutputData inverse_dynamics(double time, MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time)
 {
         //Declare constant parameters
 	const double nu = 0.35;
@@ -411,8 +411,8 @@ void outputJSON_file(){
         JsonOutput["dq_sliderX"] = dqSliderxOut;
         JsonOutput["dq_sliderY"] = dqSlideryOut;
         JsonOutput["dq_sliderZ"] = dqSliderzOut;
-        JsonOutput["_x_tcp"] = _x_tcpOut;
-        JsonOutput["_y_tcp"] = _y_tcpOut;
+        JsonOutput["x_tcpSensor"] = _x_tcpOut;
+        JsonOutput["y_tcpSensor"] = _y_tcpOut;
         JsonOutput["x_tcp"] = x_tcpOut;
         JsonOutput["y_tcp"] = y_tcpOut;
         JsonOutput["vpX"] = vpxOut;

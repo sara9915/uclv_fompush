@@ -361,7 +361,7 @@ main(int argc,  char *argv[])
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
         // printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f  %f %f %f  %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), fx, fy, fz, contact_wrench_bias.wrench.force.x, contact_wrench_bias.wrench.force.y, contact_wrench_bias.wrench.force.z, contact_wrench_ini.wrench.force.x, contact_wrench_ini.wrench.force.y, contact_wrench_ini.wrench.force.z);   
-        updateJSON_data(q_slider, dq_slider, _x_tcp, _y_tcp, x_tcp, y_tcp, vp, ap, fx, fy, fz, Output);
+        updateJSON_data(time, q_slider, dq_slider, _x_tcp, _y_tcp, x_tcp, y_tcp, vp, ap, fx, fy, fz, Output);
           }
  
         // Send robot commands
