@@ -1,6 +1,5 @@
 // Include header files
-// #include <jsoncpp/json/json.h>
-#include <jsoncpp/json/writer.h>
+#include "json/json.h"
 
 #include <iostream>
 #include <dlfcn.h>
@@ -50,6 +49,56 @@ const int num_variables = NUM_VARIABLES;
 const int num_constraints = num_ineq_constraints+num_eq_constraints;
 std::vector<geometry_msgs::WrenchStamped> ft_wrenches;
 pthread_mutex_t nonBlockMutex;
+//
+Json::Value cnOut;
+Json::Value beta1Out;
+Json::Value beta2Out;
+Json::Value dpsiOut;
+Json::Value psiOut;
+Json::Value aoxOut;
+Json::Value aoyOut;
+Json::Value aozOut;
+Json::Value aipixOut;
+Json::Value aipiyOut;
+Json::Value aipizOut;
+Json::Value abpbxOut;
+Json::Value abpbyOut;
+Json::Value rbpbxOut;
+Json::Value rbpbyOut;
+Json::Value vbpbxOut;
+Json::Value vbpbyOut;
+Json::Value fFrictionxOut;
+Json::Value fFrictionyOut;
+Json::Value fFrictionzOut;
+//
+Json::Value JsonOutput;
+Json::Value timeOut;
+Json::Value qSliderxOut;
+Json::Value qSlideryOut;
+Json::Value qSliderzOut;
+Json::Value dqSliderxOut;
+Json::Value dqSlideryOut;
+Json::Value dqSliderzOut;
+Json::Value _x_tcpOut;
+Json::Value _y_tcpOut;
+Json::Value x_tcpOut;
+Json::Value y_tcpOut;
+Json::Value vpxOut;
+Json::Value vpyOut;
+Json::Value apxOut;
+Json::Value apyOut;
+Json::Value fxOut;
+Json::Value fyOut;
+Json::Value fzOut;
+// Json::Value fxBiasOut;
+// Json::Value fyBiasOut;
+// Json::Value fzBiasOut;
+// Json::Value fxIniOut;
+// Json::Value fyIniOut;
+// Json::Value fzIniOut;
+//
+Json::StyledWriter styledWriter;
+
 struct thread_data thread_data_array[1];
 
 //********************************************************************
@@ -62,21 +111,7 @@ main(int argc,  char *argv[])
     ros::NodeHandle n;
     tf::TransformListener listener;
     ros::Subscriber sub = n.subscribe("/netft_data", 1, chatterCallback);
-    
-   Json::Value event;   
-    Json::Value vec(Json::arrayValue);
-    vec.append(Json::Value(1));
-    vec.append(Json::Value(2));
-    vec.append(Json::Value(3));
 
-    event["competitors"]["home"]["name"] = "Liverpool";
-    event["competitors"]["away"]["code"] = 89223;
-    event["competitors"]["away"]["name"] = "Aston Villa";
-    event["competitors"]["away"]["code"]=vec;
-
-    std::cout << event << std::endl;
-
-     return 0;
     // Declare Matrix variables
     MatrixXd q_pusher(2,1);
     MatrixXd dq_pusher(2,1);
@@ -278,7 +313,7 @@ main(int argc,  char *argv[])
         //**********************************************************************************
         double h = 1.0f/1000;
         ros::spinOnce();
-                
+        cout << " time "  <<time<< endl;
         //wait for 1 sec before starting position control 
         if (time<=1)
           {x_tcp = x_tcp;
@@ -295,11 +330,13 @@ main(int argc,  char *argv[])
         }
         else
         {
-        MatrixXd Output(4,1);
+        // MatrixXd Output(4,1);
+        struct OutputData Output;
         Output = inverse_dynamics(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel, time);
-        ap(0) = Output(0);
-        ap(1) = Output(1);
-        tang_vel   = Output(3);
+        
+        ap(0) = Output.aipi(0);
+        ap(1) = Output.aipi(1);
+        tang_vel   =  Output.dpsi;
         
         // Controller 1
         // vp(0) = vp(0) + 1*h*ap(0);
@@ -323,11 +360,10 @@ main(int argc,  char *argv[])
         vp(1) = 0.0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
-        printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f  %f %f %f  %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), fx, fy, fz, contact_wrench_bias.wrench.force.x, contact_wrench_bias.wrench.force.y, contact_wrench_bias.wrench.force.z, contact_wrench_ini.wrench.force.x, contact_wrench_ini.wrench.force.y, contact_wrench_ini.wrench.force.z);
+        // printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f  %f %f %f  %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), fx, fy, fz, contact_wrench_bias.wrench.force.x, contact_wrench_bias.wrench.force.y, contact_wrench_bias.wrench.force.z, contact_wrench_ini.wrench.force.x, contact_wrench_ini.wrench.force.y, contact_wrench_ini.wrench.force.z);   
+        updateJSON_data(q_slider, dq_slider, _x_tcp, _y_tcp, x_tcp, y_tcp, vp, ap, fx, fy, fz, Output);
           }
-          
-        
-
+ 
         // Send robot commands
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
         pSensorMessage->SerializeToString(&messageBuffer);
@@ -337,8 +373,11 @@ main(int argc,  char *argv[])
         // usleep(1000);
         r.sleep();
     }
-     //async_spinner->stop();
+
     (void) pthread_join(rriThread, NULL);
+    outputJSON_file();
+
+    cout<<" End of Program "<<endl;
 
     return 0;
 }

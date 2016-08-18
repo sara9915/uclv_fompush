@@ -35,8 +35,11 @@ find_library( GUROBI_CXX_LIBRARY
               PATHS "${GUROBI_HOME}/lib" 
                     "${GUROBI_HOME2}/lib"
               )
+              # 
+
+#add_library(libjsoncpp.a)
 find_package(Protobuf REQUIRED)
-              
+
 set(GUROBI_LIBRARIES "${GUROBI_CXX_LIBRARY};${GUROBI_LIBRARY}" )
 
 MESSAGE( STATUS "GUROBI_LIBRARIES: " ${GUROBI_LIBRARIES} )
@@ -144,7 +147,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(push_control src/ABBRobot.cpp src/OptProgram.cpp src/jsoncpp.cpp src/helper.cpp src/pushing.cpp src/main.cpp src/PracticalSocket/PracticalSocket.cpp src/egm/egm.pb.cc)
+add_executable(push_control src/ABBRobot.cpp src/OptProgram.cpp  src/helper.cpp src/pushing.cpp src/main.cpp src/PracticalSocket/PracticalSocket.cpp src/egm/egm.pb.cc)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -157,6 +160,7 @@ target_link_libraries(push_control
   dl
   pthread
   ${PROTOBUF_LIBRARIES}
+  libjsoncpp.a
 )
 
 #############

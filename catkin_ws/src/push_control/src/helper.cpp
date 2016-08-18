@@ -22,9 +22,8 @@
 using namespace std;
 using Eigen::MatrixXd;
 
-
 //********************************************************************************
-MatrixXd inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time)
+OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slider, MatrixXd u, double tang_vel, double time)
 {
         //Declare constant parameters
 	const double nu = 0.35;
@@ -228,12 +227,46 @@ MatrixXd inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_slid
         aipi = aibi+ Cbi.transpose()*abpb + Cbi.transpose()*cross_op(dwbbi)*rbpb*1 + 2*Cbi.transpose()*cross_op(wbbi)*vbpb + Cbi.transpose()*cross_op(wbbi)*cross_op(wbbi)*rbpb;
         
         // aipi<<0.05,0,0;
-        printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f ", time, cn, beta1, beta2, dpsi, x, y, xp, yp, psi, v_i(0), v_i(1), aibi(0), aibi(1), abpb(0), abpb(1), wbbi(2), dwbbi(2), rbpb(0), rbpb(1), vbpb(0), vbpb(1), aipi(0), aipi(1), aipi(2), f_friction(0), f_friction(1), f_friction(2));
+        //  psi, v_i(0), v_i(1), aibi(0), aibi(1), abpb(0), abpb(1), wbbi(2), dwbbi(2), rbpb(0), rbpb(1), vbpb(0), vbpb(1), aipi(0), aipi(1), aipi(2), f_friction(0), f_friction(1), f_friction(2));
 
-        MatrixXd Output(4,1);
-        Output<< aipi, dpsi;
+        // cnOut.append(cn);
+        // beta1Out.append(beta1);
+        // beta2Out.append(beta2);
+        // dpsiOut.append(dpsi);
+        // psiOut.append(psi);
+        // aoxOut.append(ao(0));
+        // aoyOut.append(ao(1));
+        // aozOut.append(ao(2));
+        // aipixOut.append(aipi(0));
+        // aipiyOut.append(aipi(1));
+        // aipizOut.append(aipi(2));
+        // abpbxOut.append(abpb(0));
+        // abpbyOut.append(abpb(1));
+        // rbpbxOut.append(rbpb(0));
+        // rbpbyOut.append(rbpb(1));
+        // vbpbxOut.append(vbpb(0));
+        // vbpbyOut.append(vbpb(1));
+        // fFrictionxOut.append(f_friction(0));
+        // fFrictionyOut.append(f_friction(1));
+        // fFrictionzOut.append(f_friction(2));
 
-	return Output;
+        // MatrixXd Output(4,1);
+        
+        struct OutputData Output_IK;
+
+        Output_IK.aipi = aipi;
+        Output_IK.psi = psi;
+        Output_IK.cn = cn;
+        Output_IK.beta1 = beta1;
+        Output_IK.beta2 = beta2;
+        Output_IK.dpsi = dpsi;
+        Output_IK.ao  = ao;
+        Output_IK.abpb  = abpb;
+        Output_IK.rbpb  = rbpb;
+        Output_IK.vbpb  = vbpb;
+        Output_IK.fFriction  = f_friction;
+
+	return Output_IK;
 
 
 
@@ -319,5 +352,109 @@ void write_file(FILE* myFile, int num_rows, int num_cols, double *A)
 
 }
 //******************
+void updateJSON_data(MatrixXd q_slider, MatrixXd dq_slider, double _x_tcp, double _y_tcp, double x_tcp, double y_tcp, MatrixXd vp, MatrixXd ap, double fx, double fy, double fz, struct OutputData Output){
+        
+        timeOut.append(time);
+        qSliderxOut.append(q_slider(0));
+        qSlideryOut.append(q_slider(1));
+        qSliderzOut.append(q_slider(2));
+        dqSliderxOut.append(dq_slider(0));
+        dqSlideryOut.append(dq_slider(1));
+        dqSliderzOut.append(dq_slider(2));
+        _x_tcpOut.append(_x_tcp);
+        _y_tcpOut.append(_y_tcp);
+        x_tcpOut.append(x_tcp);
+        y_tcpOut.append(y_tcp);
+        vpxOut.append(vp(0));
+        vpyOut.append(vp(1));
+        apxOut.append(ap(0));
+        apyOut.append(ap(1));
+        fxOut.append(fx);
+        fyOut.append(fy);
+        fzOut.append(fz);
+        // fxBiasOut.append(contact_wrench_bias.wrench.force.x);
+        // fyBiasOut.append(contact_wrench_bias.wrench.force.y);
+        // fzBiasOut.append(contact_wrench_bias.wrench.force.z);
+        // fxIniOut.append(contact_wrench_ini.wrench.force.x);
+        // fyIniOut.append(contact_wrench_ini.wrench.force.y);
+        // fzIniOut.append(contact_wrench_ini.wrench.force.z);
+        
+        cnOut.append(Output.cn);
+        beta1Out.append(Output.beta1);
+        beta2Out.append(Output.beta2);
+        dpsiOut.append(Output.dpsi);
+        psiOut.append(Output.psi);
+        aoxOut.append(Output.ao(0));
+        aoyOut.append(Output.ao(1));
+        aozOut.append(Output.ao(2));
+        aipixOut.append(Output.aipi(0));
+        aipiyOut.append(Output.aipi(1));
+        aipizOut.append(Output.aipi(2));
+        abpbxOut.append(Output.abpb(0));
+        abpbyOut.append(Output.abpb(1));
+        rbpbxOut.append(Output.rbpb(0));
+        rbpbyOut.append(Output.rbpb(1));
+        vbpbxOut.append(Output.vbpb(0));
+        vbpbyOut.append(Output.vbpb(1));
+        fFrictionxOut.append(Output.fFriction(0));
+        fFrictionyOut.append(Output.fFriction(1));
+        fFrictionzOut.append(Output.fFriction(2));
+        
+}
+
+void outputJSON_file(){
+        //Format output json file
+        JsonOutput["time"] = timeOut;
+        JsonOutput["q_sliderX"] = qSliderxOut;
+        JsonOutput["q_sliderY"] = qSlideryOut;
+        JsonOutput["q_sliderZ"] = qSliderzOut;
+        JsonOutput["dq_sliderX"] = dqSliderxOut;
+        JsonOutput["dq_sliderY"] = dqSlideryOut;
+        JsonOutput["dq_sliderZ"] = dqSliderzOut;
+        JsonOutput["_x_tcp"] = _x_tcpOut;
+        JsonOutput["_y_tcp"] = _y_tcpOut;
+        JsonOutput["x_tcp"] = x_tcpOut;
+        JsonOutput["y_tcp"] = y_tcpOut;
+        JsonOutput["vpX"] = vpxOut;
+        JsonOutput["vpY"] = vpyOut;
+        JsonOutput["apX"] = apxOut;
+        JsonOutput["apY"] = apyOut;
+        JsonOutput["fx"] = fxOut;
+        JsonOutput["fy"] = fyOut;
+        JsonOutput["fz"] = fzOut;
+        // JsonOutput["fxBias"] = fxBiasOut;
+        // JsonOutput["fyBias"] = fyBiasOut;
+        // JsonOutput["fzBias"] = fzBiasOut;
+        // JsonOutput["fxIni"] = fxIniOut;
+        // JsonOutput["fyIni"] = fyIniOut;
+        // JsonOutput["fzIni"] = fzIniOut;
+        JsonOutput["cn"] = cnOut;
+        JsonOutput["beta1"] = beta1Out;
+        JsonOutput["beat2"] = beta2Out;
+        JsonOutput["dpsi"] = dpsiOut;
+        JsonOutput["psi"] = psiOut;
+        JsonOutput["aoX"] = aoxOut;
+        JsonOutput["aoY"] = aoyOut;
+        JsonOutput["aoZ"] = aozOut;
+        JsonOutput["aipiX"] = aipixOut;
+        JsonOutput["aipiY"] = aipiyOut;
+        JsonOutput["aipiZ"] = aipizOut;
+        JsonOutput["abpbX"] = abpbxOut;
+        JsonOutput["abpbY"] = abpbyOut;
+        JsonOutput["rbpbX"] = rbpbxOut;
+        JsonOutput["rbpbY"] = rbpbyOut;
+        JsonOutput["vbpbX"] = vbpbxOut;
+        JsonOutput["vbpbY"] = vbpbyOut;
+        JsonOutput["fFrictionX"] = fFrictionxOut;
+        JsonOutput["fFrictionY"] = fFrictionyOut;
+        JsonOutput["fFrictionZ"] = fFrictionzOut;       
+
+        ofstream myOutput;
+        myOutput.open ("Output.json");
+        myOutput << styledWriter.write(JsonOutput);
+        myOutput.close();
+
+}
+
 
 

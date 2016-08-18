@@ -1,5 +1,6 @@
 /*
  */
+ #include "json/json.h"
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -27,6 +28,21 @@ struct thread_data{
     MatrixXd  *_u_control;
     MatrixXd  *_ap;
     double  *_tang_vel ;
+} ;
+
+// *****************************
+struct OutputData{
+        MatrixXd aipi;
+        double psi;
+        double cn;
+        double beta1;
+        double beta2;
+        double dpsi;
+        MatrixXd ao;
+        MatrixXd abpb;
+        MatrixXd rbpb;
+        MatrixXd vbpb;
+        MatrixXd fFriction;
 } ;
 
 class Push {
