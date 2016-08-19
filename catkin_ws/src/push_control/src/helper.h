@@ -70,9 +70,8 @@ double gettime();
 double smooth(double data, float filterVal, double smoothedVal);
 void write_file(FILE* myFile, int num_rows, int num_cols, double *A);
 void updateJSON_data(double time, MatrixXd q_slider, MatrixXd dq_slider, double _x_tcp, double _y_tcp, double x_tcp, double y_tcp, MatrixXd vp, MatrixXd ap, double fx, double fy, double fz, struct OutputData Output);
-
 void outputJSON_file();
-
+void constraintRobotPusher(double &x_tcp, double &y_tcp, MatrixXd q_slider, struct OutputData Output);
 
 #endif
 

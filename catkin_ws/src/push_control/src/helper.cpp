@@ -39,11 +39,16 @@ OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sl
         // Declare function variables
 	MatrixXd M_inv(3,3);
 	MatrixXd Cbi(3,3);
+	MatrixXd Cbi2d(2,2);
         MatrixXd Cbi_T(3,3);
 	MatrixXd w_b(3,1);
 	MatrixXd w_i(3,1);
 	MatrixXd rbpb(3,1);
 	MatrixXd ripb(3,1);
+	MatrixXd ripb2d(2,1);
+	MatrixXd ribi(2,1);
+	MatrixXd ripb_des(2,1);
+	MatrixXd rici(2,1);
 	MatrixXd n(3,1);
 	MatrixXd d1(3,1);
 	MatrixXd d2(3,1);
@@ -78,14 +83,16 @@ OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sl
         n3<<0,0,1;
 	w_b << 0,0,dtheta;
 	wbbi << 0,0,dtheta;
+	ribi << x,y;
 	ripb << xp-x,yp-y,0;
 
+        Cbi2d << cos(theta), sin(theta), -sin(theta), cos(theta);
         Cbi << cos(theta), sin(theta), 0, -sin(theta), cos(theta), 0, 0, 0, 1;
         Cbi_T = Cbi.transpose();
         
 	w_i = Cbi.transpose()*w_b;
 	rbpb = Cbi*ripb;
-        // rbpb(0) = -0.045;
+        rbpb(0) = -0.045;
         
         //Define variables
 	double psi =rbpb(1);
@@ -95,6 +102,12 @@ OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sl
 	MatrixXd v_i_3d(3,1);
 	MatrixXd n_f(3,1);
         MatrixXd qp_temp(3,1);
+        
+        //Find ideal location of pusher
+        ripb2d(0) = ripb(0);
+        ripb2d(1) = ripb(1);
+        ripb_des = Cbi2d.transpose()*ripb2d;
+        rici = ribi - ripb_des;
         
         //Define useful kinematic relationships
         n <<   cos(theta), sin(theta), -psi;
@@ -225,33 +238,9 @@ OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sl
         vbpb << 0,dpsi,0;
 
         aipi = aibi+ Cbi.transpose()*abpb + Cbi.transpose()*cross_op(dwbbi)*rbpb*1 + 2*Cbi.transpose()*cross_op(wbbi)*vbpb + Cbi.transpose()*cross_op(wbbi)*cross_op(wbbi)*rbpb;
+  
         
-        // aipi<<0.05,0,0;
-        //  psi, v_i(0), v_i(1), aibi(0), aibi(1), abpb(0), abpb(1), wbbi(2), dwbbi(2), rbpb(0), rbpb(1), vbpb(0), vbpb(1), aipi(0), aipi(1), aipi(2), f_friction(0), f_friction(1), f_friction(2));
-
-        // cnOut.append(cn);
-        // beta1Out.append(beta1);
-        // beta2Out.append(beta2);
-        // dpsiOut.append(dpsi);
-        // psiOut.append(psi);
-        // aoxOut.append(ao(0));
-        // aoyOut.append(ao(1));
-        // aozOut.append(ao(2));
-        // aipixOut.append(aipi(0));
-        // aipiyOut.append(aipi(1));
-        // aipizOut.append(aipi(2));
-        // abpbxOut.append(abpb(0));
-        // abpbyOut.append(abpb(1));
-        // rbpbxOut.append(rbpb(0));
-        // rbpbyOut.append(rbpb(1));
-        // vbpbxOut.append(vbpb(0));
-        // vbpbyOut.append(vbpb(1));
-        // fFrictionxOut.append(f_friction(0));
-        // fFrictionyOut.append(f_friction(1));
-        // fFrictionzOut.append(f_friction(2));
-
-        // MatrixXd Output(4,1);
-        
+          
         struct OutputData Output_IK;
 
         Output_IK.aipi = aipi;
@@ -265,10 +254,52 @@ OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sl
         Output_IK.rbpb  = rbpb;
         Output_IK.vbpb  = vbpb;
         Output_IK.fFriction  = f_friction;
+        Output_IK.rici  = rici;
 
 	return Output_IK;
+}
 
-
+void constraintRobotPusher(double &x_tcp, double &y_tcp, MatrixXd q_slider, struct OutputData Output){
+        //Declare variables
+        MatrixXd Cbi(2,2);
+        MatrixXd ripi(2,1);
+        MatrixXd rbpi(2,1);
+        MatrixXd ripi_clamp(2,1);
+        MatrixXd rbpi_clamp(2,1);
+        MatrixXd rbci(2,1);
+        
+        cout<< "Initial"<<x_tcp<<y_tcp<<endl;
+     
+        double delta_x = 0.01;
+        double delta_y = 0.01;
+        double theta;
+        //Assign Values
+        theta = q_slider(2);
+        ripi<<x_tcp, y_tcp;
+        Cbi << cos(theta), sin(theta), -sin(theta), cos(theta);
+        //Transform to Fb
+        rbpi = Cbi*ripi;
+        rbci = Cbi*Output.rici;
+        //Clamp pusher x position in Fb
+        if (rbpi(0) > rbci(0)+delta_x){
+                rbpi_clamp(0) = rbci(0)+delta_x;}
+        else if (rbpi(0)< rbci(1)){
+        rbpi_clamp(0) = rbci(0);}
+        else{
+        rbpi_clamp(0) = rbpi(0);}
+        //Clamp pusher y position in Fb
+        if (rbpi(1) > rbci(1)+delta_y){
+                rbpi_clamp(1) = rbci(1)+delta_y;}
+        else if (rbpi(1)< rbci(1) - delta_y){
+        rbpi_clamp(1) = rbci(1)-delta_y;}
+        else{
+        rbpi_clamp(1) = rbpi(1);}
+        //Resolve in world frame
+        ripi_clamp = Cbi.transpose()*rbpi_clamp;
+        //Overwrite commanded position of pusher
+        x_tcp = ripi_clamp(0);
+        y_tcp = ripi_clamp(1);
+                cout<< "Final"<<x_tcp<<y_tcp<<endl;
 
 }
 
@@ -450,7 +481,7 @@ void outputJSON_file(){
         JsonOutput["fFrictionZ"] = fFrictionzOut;       
 
         ofstream myOutput;
-        myOutput.open ("OutputController.json");
+        myOutput.open ("OutputControllerWihRadius.json");
         myOutput << styledWriter.write(JsonOutput);
         myOutput.close();
 

@@ -43,6 +43,7 @@ struct OutputData{
         MatrixXd rbpb;
         MatrixXd vbpb;
         MatrixXd fFriction;
+        MatrixXd rici;
 } ;
 
 class Push {

@@ -145,7 +145,7 @@ main(int argc,  char *argv[])
     double T_des, delta_t, t_ini;
     double step_size = 1.f/250;
     double xp, yp, zp;
-    double x_tcp, y_tcp, z_tcp;
+    double  z_tcp, x_tcp, y_tcp;
     double _x_tcp, _y_tcp, _z_tcp;
     double xp_des, yp_des;
     double tcp_width = 0.00475;
@@ -282,9 +282,9 @@ main(int argc,  char *argv[])
         // cout << i << endl;
 
         //**********************  Get State of robot and object from ROS *********************************
-       // if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
-           // _q_pusher_sensor<<_x_tcp,_y_tcp;
-        // }         
+       if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
+           _q_pusher_sensor<<_x_tcp,_y_tcp;
+        }         
         
         pthread_mutex_lock(&nonBlockMutex);
         getViconPose(q_slider, listener);
@@ -323,7 +323,7 @@ main(int argc,  char *argv[])
           }
 
         else if (time>=1 and time <=1.3)
-        {    vp(0) = 0.0;// 0.05
+        {    vp(0) = 0.05;
              vp(1) = 0;
         x_tcp = x_tcp + h*vp(0);
         y_tcp = y_tcp + h*vp(1);
@@ -336,7 +336,7 @@ main(int argc,  char *argv[])
         
         ap(0) = Output.aipi(0);
         ap(1) = Output.aipi(1);
-        tang_vel   =  Output.dpsi;
+        tang_vel = Output.dpsi;
         
         contact_wrench_bias = ft_wrenches.back();
         contact_wrench(0)=contact_wrench_bias.wrench.force.x - contact_wrench_ini.wrench.force.x; 
@@ -351,8 +351,11 @@ main(int argc,  char *argv[])
         // Controller 1
         vp(0) = vp(0) + 1*h*ap(0);
         vp(1) = vp(1) + 1*h*ap(1);
+        
         x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
         y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
+        
+        constraintRobotPusher(x_tcp, y_tcp, _q_slider_, Output);
                
         // Controller 2
         // vp(0) = 0.05;
