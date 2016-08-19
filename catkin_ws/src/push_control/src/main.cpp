@@ -338,12 +338,6 @@ main(int argc,  char *argv[])
         ap(1) = Output.aipi(1);
         tang_vel   =  Output.dpsi;
         
-        // Controller 1
-        // vp(0) = vp(0) + 1*h*ap(0);
-        // vp(1) = vp(1) + 1*h*ap(1);
-        // x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
-        // y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
-               
         contact_wrench_bias = ft_wrenches.back();
         contact_wrench(0)=contact_wrench_bias.wrench.force.x - contact_wrench_ini.wrench.force.x; 
         contact_wrench(1)=contact_wrench_bias.wrench.force.y - contact_wrench_ini.wrench.force.y; 
@@ -354,13 +348,19 @@ main(int argc,  char *argv[])
         fy = -contact_wrench(0);
         fz = -contact_wrench(2);
         
-        
+        // Controller 1
+        vp(0) = vp(0) + 1*h*ap(0);
+        vp(1) = vp(1) + 1*h*ap(1);
+        x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
+        y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
+               
         // Controller 2
-        vp(0) = 0.0;
-        vp(1) = 0.0;
-        x_tcp = x_tcp + h*vp(0);
-        y_tcp = y_tcp + h*vp(1);
-        // printf(" %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f  %f %f %f  %f %f %f \n", q_slider(0), q_slider(1), q_slider(2), dq_slider(0), dq_slider(1), dq_slider(2), _x_tcp, _y_tcp, x_tcp, y_tcp, vp(0), vp(1), ap(0), ap(1), fx, fy, fz, contact_wrench_bias.wrench.force.x, contact_wrench_bias.wrench.force.y, contact_wrench_bias.wrench.force.z, contact_wrench_ini.wrench.force.x, contact_wrench_ini.wrench.force.y, contact_wrench_ini.wrench.force.z);   
+        // vp(0) = 0.05;
+        // vp(1) = 0.0;
+        // x_tcp = x_tcp + h*vp(0);
+        // y_tcp = y_tcp + h*vp(1);
+        
+        //Update JSON variables
         updateJSON_data(time, q_slider, dq_slider, _x_tcp, _y_tcp, x_tcp, y_tcp, vp, ap, fx, fy, fz, Output);
           }
  

@@ -450,7 +450,7 @@ void outputJSON_file(){
         JsonOutput["fFrictionZ"] = fFrictionzOut;       
 
         ofstream myOutput;
-        myOutput.open ("Output.json");
+        myOutput.open ("OutputController.json");
         myOutput << styledWriter.write(JsonOutput);
         myOutput.close();
 
