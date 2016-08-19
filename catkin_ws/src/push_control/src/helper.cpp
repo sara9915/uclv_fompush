@@ -104,9 +104,9 @@ OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sl
         MatrixXd qp_temp(3,1);
         
         //Find ideal location of pusher
-        ripb2d(0) = ripb(0);
-        ripb2d(1) = ripb(1);
-        ripb_des = Cbi2d.transpose()*ripb2d;
+        rbpb2d(0) = rbpb(0);
+        rbpb2d(1) = rbpb(1);
+        ripb_des = Cbi2d.transpose()*rbpb2d;
         rici = ribi - ripb_des;
         
         //Define useful kinematic relationships
@@ -275,7 +275,7 @@ void constraintRobotPusher(double &x_tcp, double &y_tcp, MatrixXd q_slider, stru
         double theta;
         //Assign Values
         theta = q_slider(2);
-        ripi<<x_tcp, y_tcp;
+        ripi<< x_tcp, y_tcp;
         Cbi << cos(theta), sin(theta), -sin(theta), cos(theta);
         //Transform to Fb
         rbpi = Cbi*ripi;
@@ -299,7 +299,8 @@ void constraintRobotPusher(double &x_tcp, double &y_tcp, MatrixXd q_slider, stru
         //Overwrite commanded position of pusher
         x_tcp = ripi_clamp(0);
         y_tcp = ripi_clamp(1);
-                cout<< "Final"<<x_tcp<<y_tcp<<endl;
+        
+        cout<< "Final"<<x_tcp<<y_tcp<<rbci(0)<<rbci(1)<<endl;
 
 }
 
