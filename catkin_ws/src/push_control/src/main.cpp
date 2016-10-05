@@ -49,7 +49,7 @@ const int num_variables = NUM_VARIABLES;
 const int num_constraints = num_ineq_constraints+num_eq_constraints;
 std::vector<geometry_msgs::WrenchStamped> ft_wrenches;
 pthread_mutex_t nonBlockMutex;
-//
+// //
 Json::Value cnOut;
 Json::Value beta1Out;
 Json::Value beta2Out;
@@ -90,12 +90,11 @@ Json::Value apyOut;
 Json::Value fxOut;
 Json::Value fyOut;
 Json::Value fzOut;
-// Json::Value fxBiasOut;
-// Json::Value fyBiasOut;
-// Json::Value fzBiasOut;
-// Json::Value fxIniOut;
-// Json::Value fyIniOut;
-// Json::Value fzIniOut;
+
+Json::Value pos_command;
+Json::Value pos_sensor;
+// Json::Value pVel1;
+
 //
 Json::StyledWriter styledWriter;
 
@@ -154,6 +153,7 @@ main(int argc,  char *argv[])
     bool has_vicon_vel = false;
     double Position_Outputs[2];
     double tang_vel=0;
+    int lv2;
     FILE *myFile = NULL;
 
     //Define Mutex
@@ -198,7 +198,8 @@ main(int argc,  char *argv[])
     MatrixXd contact_wrench(3,1);
 
     //First Loop
-    while(!has_robot || !has_vicon_pos || (tmp < 2500) && ros::ok())
+    //|| !has_vicon_pos
+    while(!has_robot  || (tmp < 2500) && ros::ok())
     {
         tmp++;
         //Read robot position
@@ -232,8 +233,7 @@ main(int argc,  char *argv[])
         lv1+=1;
         usleep(4e3);
     }
-
-    // return 0;
+    
     //Read Vicon and Initialize Variables
     theta = q_slider(2);
 
@@ -256,6 +256,7 @@ main(int argc,  char *argv[])
         ros::spinOnce();
         usleep(4e3);
     }
+    
     // cout << " Second loop terminated" << endl;
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
             _q_pusher_sensor<<_x_tcp,_y_tcp;
@@ -275,7 +276,7 @@ main(int argc,  char *argv[])
     //async_spinner->start();
     ros::Rate r(1000); // 10 hz
 
-    for (int i=0;i<15000  && ros::ok();i++){
+    for (int i=0;i<5000  && ros::ok();i++){
 
         if (i==0){t_ini = gettime();}
         time = gettime()- t_ini;
@@ -286,30 +287,30 @@ main(int argc,  char *argv[])
            _q_pusher_sensor<<_x_tcp,_y_tcp;
         }         
         
-        pthread_mutex_lock(&nonBlockMutex);
-        getViconPose(q_slider, listener);
-        xs_old = xs;
-        ys_old = ys;
-        thetas_old = thetas; 
-        
-        xs = smooth(q_slider(0), 0.98, xs);
-        ys = smooth(q_slider(1), 0.98, ys);
-        thetas = smooth(q_slider(2), 0.98, thetas);
-        
-        dq_slider(0) = (xs-xs_old)/h1;
-        dq_slider(1) = (ys-ys_old)/h1;
-        dq_slider(2) = (thetas-thetas_old)/h1;
-
-        q_pusher(0) = x_tcp;// + tcp_width*cos(theta*1);
-        q_pusher(1) = y_tcp;// + tcp_width*sin(theta*1);
-        
-        //Assign local variables
-        _q_slider_ = q_slider;
-        _dq_slider_ = dq_slider;
-        _q_pusher_ = q_pusher;
-        _Target_ = Target;
-        _u_control_ = u_control;
-        pthread_mutex_unlock(&nonBlockMutex);
+        // pthread_mutex_lock(&nonBlockMutex);
+        // getViconPose(q_slider, listener);
+        // xs_old = xs;
+        // ys_old = ys;
+        // thetas_old = thetas; 
+        // 
+        // xs = smooth(q_slider(0), 0.98, xs);
+        // ys = smooth(q_slider(1), 0.98, ys);
+        // thetas = smooth(q_slider(2), 0.98, thetas);
+        // 
+        // dq_slider(0) = (xs-xs_old)/h1;
+        // dq_slider(1) = (ys-ys_old)/h1;
+        // dq_slider(2) = (thetas-thetas_old)/h1;
+// 
+        // q_pusher(0) = x_tcp;// + tcp_width*cos(theta*1);
+        // q_pusher(1) = y_tcp;// + tcp_width*sin(theta*1);
+        // 
+        // //Assign local variables
+        // _q_slider_ = q_slider;
+        // _dq_slider_ = dq_slider;
+        // _q_pusher_ = q_pusher;
+        // _Target_ = Target;
+        // _u_control_ = u_control;
+        // pthread_mutex_unlock(&nonBlockMutex);
         //**********************************************************************************
         double h = 1.0f/1000;
         ros::spinOnce();
@@ -317,45 +318,57 @@ main(int argc,  char *argv[])
         //wait for 1 sec before starting position control 
         if (time<=1)
           {x_tcp = x_tcp;
-          contact_wrench_ini = ft_wrenches.back();
+          // contact_wrench_ini = ft_wrenches.back();
           // cout << " In first condition "  << endl;
           // cout << " time "  <<time<< endl;
           }
 
-        else if (time>=1 and time <=1.3)
-        {    vp(0) = 0.05;
-             vp(1) = 0;
-        x_tcp = x_tcp + h*vp(0);
-        y_tcp = y_tcp + h*vp(1);
-        }
+        // else if (time>=1 and time <=1.3)
+        // {    vp(0) = 0.05;
+             // vp(1) = 0;
+        // x_tcp = x_tcp + h*vp(0);
+        // y_tcp = y_tcp + h*vp(1);
+        // }
         else
         {
         // MatrixXd Output(4,1);
-        struct OutputData Output;
-        Output = inverse_dynamics(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel, time);
+        // struct OutputData Output;
+        // Output = inverse_dynamics(_q_pusher_, _q_slider_, _dq_slider_, u_control, tang_vel, time);
         
-        ap(0) = Output.aipi(0);
-        ap(1) = Output.aipi(1);
-        tang_vel = Output.dpsi;
-        
-        contact_wrench_bias = ft_wrenches.back();
-        contact_wrench(0)=contact_wrench_bias.wrench.force.x - contact_wrench_ini.wrench.force.x; 
-        contact_wrench(1)=contact_wrench_bias.wrench.force.y - contact_wrench_ini.wrench.force.y; 
-        contact_wrench(2)=contact_wrench_bias.wrench.force.z - contact_wrench_ini.wrench.force.z; 
-
-        double fx, fy, fz;
-        fx = -contact_wrench(1);
-        fy = -contact_wrench(0);
-        fz = -contact_wrench(2);
+        // ap(0) = Output.aipi(0);
+        // ap(1) = Output.aipi(1);
+        // tang_vel = Output.dpsi;
+        // 
+        // contact_wrench_bias = ft_wrenches.back();
+        // contact_wrench(0)=contact_wrench_bias.wrench.force.x - contact_wrench_ini.wrench.force.x; 
+        // contact_wrench(1)=contact_wrench_bias.wrench.force.y - contact_wrench_ini.wrench.force.y; 
+        // contact_wrench(2)=contact_wrench_bias.wrench.force.z - contact_wrench_ini.wrench.force.z; 
+// 
+        // double fx, fy, fz;
+        // fx = -contact_wrench(1);
+        // fy = -contact_wrench(0);
+        // fz = -contact_wrench(2);
         
         // Controller 1
-        vp(0) = vp(0) + 1*h*ap(0);
-        vp(1) = vp(1) + 1*h*ap(1);
+        // vp(0) = vp(0) + 1*h*ap(0);
+        // vp(1) = vp(1) + 1*h*ap(1);
         
-        x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
-        y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
+        // x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
+        // y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
+ 
+        double vel_x;
         
-        constraintRobotPusher(x_tcp, y_tcp, _q_slider_, Output);
+        timeOut.append(time);
+        pos_command[0].append(x_tcp);
+        pos_command[1].append(y_tcp);
+        pos_sensor[0].append(_x_tcp);
+        pos_sensor[1].append(_y_tcp);
+        
+        //Position Control
+        x_tcp = x_tcp + h*0.05;
+        y_tcp = y_tcp;
+        
+        // constraintRobotPusher(x_tcp, y_tcp, _q_slider_, Output);
                
         // Controller 2
         // vp(0) = 0.05;
@@ -364,7 +377,7 @@ main(int argc,  char *argv[])
         // y_tcp = y_tcp + h*vp(1);
         
         //Update JSON variables
-        updateJSON_data(time, q_slider, dq_slider, _x_tcp, _y_tcp, x_tcp, y_tcp, vp, ap, fx, fy, fz, Output);
+        // updateJSON_data(time, q_slider, dq_slider, _x_tcp, _y_tcp, x_tcp, y_tcp, vp, ap, fx, fy, fz, Output);
           }
  
         // Send robot commands
@@ -378,7 +391,16 @@ main(int argc,  char *argv[])
     }
 
     (void) pthread_join(rriThread, NULL);
-    outputJSON_file();
+    // outputJSON_file();
+    
+    JsonOutput["time"] = timeOut;
+    JsonOutput["pos_command"] = pos_command;
+    JsonOutput["pos_sensor"] = pos_sensor;
+    
+    ofstream myOutput;
+    myOutput.open ("/home/mcube10/cpush_qs/catkin_ws/src/push_control/src/Data/OutputVel_0_05.json");
+    myOutput << styledWriter.write(JsonOutput);
+    myOutput.close();
 
     cout<<" End of Program "<<endl;
 

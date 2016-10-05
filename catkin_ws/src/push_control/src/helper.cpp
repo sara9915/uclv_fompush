@@ -46,6 +46,7 @@ OutputData inverse_dynamics(MatrixXd q_pusher, MatrixXd q_slider, MatrixXd dq_sl
 	MatrixXd rbpb(3,1);
 	MatrixXd ripb(3,1);
 	MatrixXd ripb2d(2,1);
+	MatrixXd rbpb2d(2,1);
 	MatrixXd ribi(2,1);
 	MatrixXd ripb_des(2,1);
 	MatrixXd rici(2,1);
