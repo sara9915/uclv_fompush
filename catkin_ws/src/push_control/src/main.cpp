@@ -271,6 +271,9 @@ main(int argc,  char *argv[])
     double dy_smooth=0;
     vp << 0,0;
     double _x_tcp_old = 0.0;
+    double x_tcp_ini, y_tcp_ini;
+    x_tcp_ini = x_tcp;
+    y_tcp_ini = y_tcp;
     //std::cout << "async spinner" << std::endl;
     //async_spinner = new ros::AsyncSpinner(2);
     //async_spinner->start();
@@ -367,15 +370,15 @@ main(int argc,  char *argv[])
         //Position Control
         // ap(0) = 100;
         // ap(1) = 0;
-        double freq=0.5;
+        double freq=3;
         
-        vp(0) = 0.05;
-        vp(1) = -0.2*sin(2*3.1416*freq*(time-1))*2*3.1316*freq;
+        // ap(0) = 5;
+        // ap(1) = 0;
         // 
         // x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
         // y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
-        x_tcp = x_tcp + h*vp(0);
-        y_tcp = y_tcp + h*vp(1);
+        x_tcp = x_tcp_ini + 0.05*(time-1);
+        y_tcp = y_tcp_ini + 0.1*sin(2*3.14157*freq*(time-1));
         
         // constraintRobotPusher(x_tcp, y_tcp, _q_slider_, Output);
                
@@ -407,7 +410,7 @@ main(int argc,  char *argv[])
     JsonOutput["pos_sensor"] = pos_sensor;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Wave_freq_0_5.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Sine_3.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
 
