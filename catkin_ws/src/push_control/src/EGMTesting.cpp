@@ -40,7 +40,6 @@ using namespace abb::egm;
 using namespace tf;
 using namespace std;
 using Eigen::MatrixXd;
-
 //Define Global Variables
 const int num_ineq_constraints = NUM_INEQ_CONSTRAINTS;
 const int num_eq_constraints = NUM_EQ_CONSTRAINTS;
@@ -92,7 +91,7 @@ Json::Value fzOut;
 
 Json::Value pos_command;
 Json::Value pos_sensor;
-// Json::Value pVel1;
+Json::Value vel_sensor;
 
 //
 Json::StyledWriter styledWriter;
@@ -149,15 +148,12 @@ main(int argc,  char *argv[])
     EgmSensor *pSensorMessage = new EgmSensor();
     EgmRobot *pRobotMessage = new EgmRobot();
     string messageBuffer;
-   
-    
     //Initialize Vicon and robot data collection
     int tmp = 0;
     int lv1 = 0;
     // geometry_msgs::WrenchStamped contact_wrench_ini;
     // geometry_msgs::WrenchStamped contact_wrench_bias;
     // MatrixXd contact_wrench(3,1);
-
     //First Loop
     //|| !has_vicon_pos
     while(!has_robot  || (tmp < 1000) && ros::ok())
@@ -182,11 +178,9 @@ main(int argc,  char *argv[])
         lv1+=1;
         usleep(4e3);
     }
-
     //Initialize position of pusher
     q_pusher(0) = x_tcp;
     q_pusher(1) = y_tcp;
-
     //Create Thread
     // pthread_create(&rriThread, &attrR, rriMain, (void*) &thread_data_array[0]) ;
 
@@ -216,7 +210,10 @@ main(int argc,  char *argv[])
     x_tcp_ini = x_tcp;
     y_tcp_ini = y_tcp;
     ros::Rate r(1000); // 10 hz
-
+    
+    double xs_old=0,xs=0,dxs=0;
+    double ys_old=0,ys=0,dys=0;
+    double h = 1.0f/1000;
 
     for (int i=0;i<5000  && ros::ok();i++){
 
@@ -226,38 +223,43 @@ main(int argc,  char *argv[])
         //**********************  Get State of robot and object from ROS *********************************
        if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
            _q_pusher_sensor<<_x_tcp,_y_tcp;
+           xs = smooth(_x_tcp, 0.98, xs);
+           ys = smooth(_y_tcp, 0.98, ys);
+           dxs = (xs-xs_old)/h;
+           dys = (ys-ys_old)/h;
+           xs_old=xs;
+           ys_old=ys;
         }         
         //**********************************************************************************
-        double h = 1.0f/1000;
         ros::spinOnce();
         cout << " time "  <<time<< endl;
         //wait for 1 sec before starting position control 
-        if (time<=1)
+        if (time<=1.0)
           {x_tcp = x_tcp;
           // contact_wrench_ini = ft_wrenches.back();
           // cout << " In first condition "  << endl;
           // cout << " time "  <<time<< endl;
           }
-
-        // else if (time>=1 and time <=1.3)
+        // else if (time>=0.7 and time <=1.0)
         // {    vp(0) = 0.05;
              // vp(1) = 0;
         // x_tcp = x_tcp + h*vp(0);
         // y_tcp = y_tcp + h*vp(1);
+        // 
+        // x_tcp_ini = x_tcp;
+        // y_tcp_ini = y_tcp;
         // }
         else
         {
-
         double vel_x;
-        
         timeOut.append(time);
         pos_command[0].append(x_tcp);
         pos_command[1].append(y_tcp);
         pos_sensor[0].append(_x_tcp);
         pos_sensor[1].append(_y_tcp);
-        
+        vel_sensor[0].append(dxs);
+        vel_sensor[1].append(dys);
         //Position Control
-
         double freq=0.5;
         // double freq=1;
         // double freq=3;
@@ -272,24 +274,20 @@ main(int argc,  char *argv[])
         // y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
         x_tcp = x_tcp_ini + 0.05*(time-1);
         y_tcp = y_tcp_ini + 0.1*sin(2*3.14157*freq*(time-1));
-
           }
- 
         // Send robot commands
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
         pSensorMessage->SerializeToString(&messageBuffer);
         EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
-        
         //Sleep for 1000Hz loop
         r.sleep();
     }
-
     // (void) pthread_join(rriThread, NULL);
     // outputJSON_file();
-    
     JsonOutput["time"] = timeOut;
     JsonOutput["pos_command"] = pos_command;
     JsonOutput["pos_sensor"] = pos_sensor;
+    JsonOutput["vel_sensor"] = vel_sensor;
     
     ofstream myOutput;
     myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Raw_0_10_3_Run10_4_1000_Sine_0_5.json");
