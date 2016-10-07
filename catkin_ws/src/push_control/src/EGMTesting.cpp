@@ -258,8 +258,8 @@ main(int argc,  char *argv[])
         
         //Position Control
 
-        // double freq=0.5;
-        double freq=3;
+        double freq=0.5;
+        // double freq=1;
         // double freq=3;
         vp(0) = 0.05;
         vp(1) = 0;
@@ -292,7 +292,7 @@ main(int argc,  char *argv[])
     JsonOutput["pos_sensor"] = pos_sensor;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Push_Default_LpFileter_20_Sine_3.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Default_RampOut_0_5_Sine_0_5.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
 
