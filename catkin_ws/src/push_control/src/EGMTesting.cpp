@@ -292,7 +292,7 @@ main(int argc,  char *argv[])
     JsonOutput["pos_sensor"] = pos_sensor;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Default_CondTime_1_Sine_0_5.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Raw_0_10_3_Run10_4_1000_Sine_0_5.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
 
