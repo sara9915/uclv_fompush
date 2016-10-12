@@ -127,6 +127,7 @@ main(int argc,  char *argv[])
     bool has_vicon_vel = false;
     int lv2;
     FILE *myFile = NULL;
+    double time_old;
 
     //Define Mutex
     // pthread_mutex_t nonBlockMutex;
@@ -223,12 +224,12 @@ main(int argc,  char *argv[])
         //**********************  Get State of robot and object from ROS *********************************
        if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
            _q_pusher_sensor<<_x_tcp,_y_tcp;
-           xs = smooth(_x_tcp, 0.98, xs);
-           ys = smooth(_y_tcp, 0.98, ys);
-           dxs = (xs-xs_old)/h;
-           dys = (ys-ys_old)/h;
-           xs_old=xs;
-           ys_old=ys;
+           xs = smooth(_x_tcp, 0.999, xs);
+           ys = smooth(_y_tcp, 0.999, ys);
+           dxs = (_x_tcp-xs_old)*250;
+           dys = (_y_tcp-ys_old)*250;
+           xs_old=_x_tcp;
+           ys_old=_y_tcp;
         }         
         //**********************************************************************************
         ros::spinOnce();
@@ -265,6 +266,7 @@ main(int argc,  char *argv[])
         // double freq=3;
         vp(0) = 0.05;
         vp(1) = 0;
+        // cout<< 1/(time-time_old);
         // ap(0) = 5;
         // ap(1) = 0;
         // 
@@ -272,8 +274,10 @@ main(int argc,  char *argv[])
         // y_tcp = y_tcp + h*vp(1);
         // x_tcp = x_tcp + h*vp(0) + .5*h*h*ap(0);
         // y_tcp = y_tcp + h*vp(1) + .5*h*h*ap(1);
-        x_tcp = x_tcp_ini + 0.05*(time-1);
-        y_tcp = y_tcp_ini + 0.1*sin(2*3.14157*freq*(time-1));
+        x_tcp = x_tcp + 0.05*h - h*1*(dxs - 0.05);
+        y_tcp = y_tcp + 0.1*sin(2*3.14157*freq*(time-1))*h - h*1*(dys - 0.1*sin(2*3.14157*freq*(time-1)));
+        // x_tcp = _x_tcp + - 100*h*1*(dxs - 0.05);
+        // y_tcp = _y_tcp;
           }
         // Send robot commands
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
@@ -281,6 +285,7 @@ main(int argc,  char *argv[])
         EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         //Sleep for 1000Hz loop
         r.sleep();
+        time_old = time;
     }
     // (void) pthread_join(rriThread, NULL);
     // outputJSON_file();
@@ -290,7 +295,7 @@ main(int argc,  char *argv[])
     JsonOutput["vel_sensor"] = vel_sensor;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Raw_0_10_3_Run10_4_1000_Sine_0_5.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/VelocityTestNoFilter.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
 

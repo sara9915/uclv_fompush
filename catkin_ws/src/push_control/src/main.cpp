@@ -190,7 +190,7 @@ main(int argc,  char *argv[])
     int tmp = 0;
     int lv1 = 0;
     double xs_old=0, xs=0,dxs=0;
-    double ys_old=0, ys=0,dys=0 ;
+    double ys_old=0, ys=0,dys=0;
     double thetas_old=0, thetas=0, dthetas=0;
     double h1=1.0f/1000;
     geometry_msgs::WrenchStamped contact_wrench_ini;
@@ -317,7 +317,7 @@ main(int argc,  char *argv[])
         //**********************************************************************************
         double h = 1.0f/1000;
         ros::spinOnce();
-        cout << " time "  <<time<< endl;
+        // cout << " time "  <<time<< endl;
         //wait for 1 sec before starting position control 
         if (time<=1)
           {x_tcp = x_tcp;
