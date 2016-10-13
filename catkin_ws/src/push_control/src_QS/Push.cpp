@@ -124,8 +124,8 @@ double Push::OptimizeModel()
 	model.optimize();
 	if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
 		objval = model.get(GRB_DoubleAttr_ObjVal);
-                cout<< "objval"<<endl;
-                cout<< objval<<endl;
+                // cout<< "objval"<<endl;
+                // cout<< objval<<endl;
 		for (int i = 0; i < NUM_VARIABLES; i++){
 			solution[i] = vars[i].get(GRB_DoubleAttr_X);
 			//~ cout<<vars[i].get(GRB_DoubleAttr_X)<<endl;
@@ -160,17 +160,19 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         ribi<<q_slider(0),q_slider(1);
         ripb = ripi-ribi;
         rbpb = Cbi*ripb;
-        rx = rbpb(0);
+        // rx = rbpb(0);
+        rx = -0.09/2;
         ry = rbpb(1);
+        printf("rx, ry: %f %f \n", rx, ry);
         //Find delta_x
         MatrixXd delta_x(4,1);
         MatrixXd x_state(4,1);
         x_state<<q_slider,ry;
         delta_x=x_state-x_des;
-        cout<< "delta_x"<<endl;
-        cout<< delta_x<<endl;
-        cout<< "rbpb"<<endl;
-        cout<< rbpb<<endl;
+        // cout<< "delta_x"<<endl;
+        // cout<< delta_x<<endl;
+        // cout<< "rbpb"<<endl;
+        // cout<< rbpb<<endl;
         //----------------Add IC constraints-----------------------------------
 	//Doubles
 	double E, E1, E2;

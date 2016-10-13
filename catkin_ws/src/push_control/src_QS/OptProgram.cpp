@@ -73,21 +73,21 @@ void *rriMain(void *thread_arg)
         min = fval.minCoeff(&minIndex, &maxCol); 
         //Assign new control input to shared variables
         pthread_mutex_lock(&nonBlockMutex);
-        cout<<"Stick"<<endl;
-        cout<<Stick.delta_u<<endl;
-        cout<<fval1<<endl;
-        cout<<"Up"<<endl;
-        cout<<Up.delta_u<<endl;
-        cout<<fval2<<endl;
-        cout<<"Down"<<endl;
-        cout<<Down.delta_u<<endl;
+        // cout<<"Stick"<<endl;
+        // cout<<Stick.delta_u<<endl;
+        // cout<<fval1<<endl;
+        // cout<<"Up"<<endl;
+        // cout<<Up.delta_u<<endl;
+        // cout<<fval2<<endl;
+        // cout<<"Down"<<endl;
+        // cout<<Down.delta_u<<endl;
         cout<<fval3<<endl;
         if (minIndex==0){ u_control = Stick.delta_u; 
-            cout<<"Stick"<<endl;}
+            }
         else if (minIndex==1){  u_control = Up.delta_u;
-            cout<<"Up"<<endl;}
+            }
         else{   u_control = Down.delta_u;
-            cout<<"Down"<<endl;}
+            }
         pthread_mutex_unlock(&nonBlockMutex);
         //Remove Contraints
         Stick.RemoveConstraints();

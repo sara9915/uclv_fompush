@@ -125,7 +125,7 @@ int main(int argc,  char *argv[]){
     //************** Main Control Loop ****************************************************************************************
     //*************************************************************************************************************************
     ros::Rate r(1000);
-    for (int i =0;i<15000 && ros::ok();i++)
+    for (int i =0;i<150000 && ros::ok();i++)
     {
         //Get time---------------------------------------------------------------------------------------------------------------------
         if (i==0){t_ini = gettime();}
@@ -136,6 +136,9 @@ int main(int argc,  char *argv[]){
         }  
         pthread_mutex_lock(&nonBlockMutex);
         getViconPose(q_slider, listener);
+        // cout<< "q_slider"<<endl;
+        // cout<< q_slider<<endl;
+        printf ("q_slider %f %f %f \n",q_slider(0),q_slider(1),q_slider(2));
         q_pusher(0) = x_tcp;// + tcp_width*cos(theta*1);
         q_pusher(1) = y_tcp;// + tcp_width*sin(theta*1);
         //Assign local variables
@@ -143,8 +146,8 @@ int main(int argc,  char *argv[]){
         _q_pusher = q_pusher;
         _u_control = u_control;
         TimeGlobal = time;
-        cout<< "u_control"<<endl;
-        cout<< u_control<<endl;
+        // cout<< "u_control"<<endl;
+        // cout<< u_control<<endl;
         pthread_mutex_unlock(&nonBlockMutex);
         //Position Control Parameters --------------------------------------------------------------------------------------------------
         if (time<=1)
@@ -155,13 +158,13 @@ int main(int argc,  char *argv[]){
                 vp(0) = 0;
                 vp(1) = 0;}
             else{
-                vp(0) = _u_control(0)*0 + 0.05;
+                vp(0) = _u_control(0)*0 + 0.05*1;
                 vp(1) = _u_control(1)*0;
             }
             x_tcp = x_tcp + h*vp(0);
             y_tcp = y_tcp + h*vp(1);
         }
-        cout<< x_tcp<<endl;
+        // cout<< x_tcp<<endl;
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
         pSensorMessage->SerializeToString(&messageBuffer);
         EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
