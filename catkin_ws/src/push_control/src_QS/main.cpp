@@ -13,6 +13,7 @@ pthread_mutex_t nonBlockMutex;
 struct thread_data thread_data_array[1];
 //Doubles
 double TimeGlobal=0;
+double Flag=0;
 //Vector
 std::vector<geometry_msgs::WrenchStamped> ft_wrenches;
 //JSON Variables
@@ -39,7 +40,9 @@ int main(int argc,  char *argv[]){
     MatrixXd _q_pusher(2,1);
     MatrixXd _q_slider(3,1);
     MatrixXd _u_control(2,1);
-    MatrixXd vp(2,1);
+    MatrixXd vipi(2,1);
+    MatrixXd vbpi(2,1);
+    MatrixXd Cbi(2,2);
     //Integers
     int tmp = 0;
     int lv1 = 0;
@@ -47,6 +50,7 @@ int main(int argc,  char *argv[]){
     double  z_tcp, x_tcp, y_tcp;
     double  _z_tcp, _x_tcp, _y_tcp;
     double  time, t_ini;
+    double theta;
     double h=1.0f/1000;
     //Booleans
     bool has_robot = false;
@@ -155,14 +159,18 @@ int main(int argc,  char *argv[]){
           }
         else{    
             if (x_tcp>0.5){
-                vp(0) = 0;
-                vp(1) = 0;}
+                vipi(0) = 0;
+                vipi(1) = 0;}
             else{
-                vp(0) = _u_control(0)*0 + 0.05*1;
-                vp(1) = _u_control(1)*0;
+                //Convert u_control from body to intertial reference frame
+                theta = _q_slider(2);
+                Cbi<< cos(theta), sin(theta), -sin(theta), cos(theta);
+                vbpi(0) = _u_control(0)*1 + 0.05*1;
+                vbpi(1) = _u_control(1)*1;
+                vipi = Cbi.transpose()*vbpi;
             }
-            x_tcp = x_tcp + h*vp(0);
-            y_tcp = y_tcp + h*vp(1);
+            x_tcp = x_tcp + h*vipi(0);
+            y_tcp = y_tcp + h*vipi(1);
         }
         // cout<< x_tcp<<endl;
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);

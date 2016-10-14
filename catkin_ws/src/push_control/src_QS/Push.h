@@ -2,6 +2,8 @@
  */
 #include "json/json.h"
 
+extern double Flag;
+
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::ArrayXf;

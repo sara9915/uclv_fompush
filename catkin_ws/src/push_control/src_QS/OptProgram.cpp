@@ -65,9 +65,22 @@ void *rriMain(void *thread_arg)
         Down.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
         Up.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
         //Optimize Models
-        fval1 = Stick.OptimizeModel();
-        fval2 = Up.OptimizeModel();
-        fval3 = Down.OptimizeModel();
+        try{
+        fval1 = Stick.OptimizeModel();}
+        catch (...)
+        {
+            fval1 = 100000;
+        }
+        try{fval2 = Up.OptimizeModel();}
+        catch (...)
+        {
+            fval2 = 100000;
+        }
+        try{fval3 = Down.OptimizeModel();}
+        catch (...)
+        {
+            fval3 = 100000;
+        }
         //Find best control input
         fval << fval1, fval2, fval3;
         min = fval.minCoeff(&minIndex, &maxCol); 

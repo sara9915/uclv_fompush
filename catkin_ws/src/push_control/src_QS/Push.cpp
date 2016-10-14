@@ -35,7 +35,8 @@ void Push::ReadMatrices()
     Json::Value root;
     Json::Reader reader;
     //Load Json file
-    ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/Matrices.json");
+    // ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/Matrices.json");
+    ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/MatricesTarget.json");
     file >> root; 
     string Ain_string;
     string bin_string;
@@ -140,7 +141,8 @@ return objval;
 //*******************************************************************************************
 void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
 {       
-        //----------------Find delta_x-----------------------------------
+        //----------------Find delta_x: Trajectory Tracking-----------------------------------
+        /* Uncomment this part for trajectory tracking mode
         //Find desired state
         MatrixXd x_des(4,1);
         x_des(0) = 0.15 + (time-1)*0.05;
@@ -173,6 +175,68 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         // cout<< delta_x<<endl;
         // cout<< "rbpb"<<endl;
         // cout<< rbpb<<endl;
+        * //Find delta_x
+        MatrixXd delta_x(4,1);
+        MatrixXd x_state(4,1);
+        x_state<<q_slider,ry;
+        delta_x=x_state-x_des;
+        * */
+        //----------------Find delta_x: Target Tracking-----------------------------------
+        //Find position d
+        MatrixXd ripi(2,1);
+        MatrixXd ribi(2,1);
+        MatrixXd ripb(2,1);
+        MatrixXd rbpb(2,1);
+        MatrixXd Cbi(2,2);
+        double theta = q_slider(2);
+        double rx, ry;
+        Cbi<< cos(theta), sin(theta), -sin(theta), cos(theta);
+        ripi<<q_pusher(0),q_pusher(1);
+        ribi<<q_slider(0),q_slider(1);
+        ripb = ripi-ribi;
+        rbpb = Cbi*ripb;
+        // rx = rbpb(0);
+        rx = -0.09/2;
+        ry = rbpb(1);
+        printf("rx, ry: %f %f \n", rx, ry);
+        //Compute target frame kinematics
+        MatrixXd riti(2,1);
+        MatrixXd ritb(2,1);
+        MatrixXd rbtb(2,1);
+        MatrixXd vcbi(2,1);
+        // MatrixXd Cci(2,2);
+        double theta_rel;
+        double theta_g;
+        //
+        if (Flag==0){
+                riti << .2+.18,-.12;
+                ritb = riti - ribi;
+                cout<< "riti"<<endl;
+                cout<< riti<<endl;
+                cout<< "ribi"<<endl;
+                cout<< ribi<<endl;
+                if (ritb.norm()<0.02){Flag=1;}}
+        else if (Flag==1){
+                riti << .2+.18,.12;
+                ritb = riti - ribi;
+                if (ritb.norm()<0.02){Flag=2;}
+        }
+        else if (Flag==2){
+                riti << .2,0;
+                ritb = riti - ribi;
+                if (ritb.norm()<0.05){Flag=3;}
+        }
+        rbtb = Cbi*ritb;
+        complex<double> mycomplex (rbtb(0), rbtb(1));
+	mycomplex = log(mycomplex);
+	theta_rel = -mycomplex.imag();
+	theta_g = theta - theta_rel;
+        // Cci << cos(theta), sin(theta), -sin(theta), cos(theta);
+        // vcbi = Cci*
+        //Compute delta x
+        MatrixXd delta_x(4,1);
+        delta_x << 0,0,theta_rel, ry;
+
         //----------------Add IC constraints-----------------------------------
 	//Doubles
 	double E, E1, E2;
