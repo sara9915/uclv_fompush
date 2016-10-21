@@ -35,8 +35,8 @@ void Push::ReadMatrices()
     Json::Value root;
     Json::Reader reader;
     //Load Json file
-    // ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/Matrices.json");
-    ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/MatricesTarget.json");
+    ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/Matrices.json");
+    // ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/MatricesTarget.json");
     file >> root; 
     string Ain_string;
     string bin_string;
@@ -142,10 +142,10 @@ return objval;
 void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
 {       
         //----------------Find delta_x: Trajectory Tracking-----------------------------------
-        /* Uncomment this part for trajectory tracking mode
+        // /* Uncomment this part for trajectory tracking mode
         //Find desired state
         MatrixXd x_des(4,1);
-        x_des(0) = 0.15 + (time-1)*0.05;
+        x_des(0) = 0.20 + (time-1)*0.05;
         x_des(1) = 0.0;
         x_des(2) = 0;
         x_des(3) = 0;
@@ -165,23 +165,24 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         // rx = rbpb(0);
         rx = -0.09/2;
         ry = rbpb(1);
-        printf("rx, ry: %f %f \n", rx, ry);
+        // printf("rx, ry: %f %f \n", rx, ry);
         //Find delta_x
         MatrixXd delta_x(4,1);
         MatrixXd x_state(4,1);
         x_state<<q_slider,ry;
         delta_x=x_state-x_des;
-        // cout<< "delta_x"<<endl;
-        // cout<< delta_x<<endl;
-        // cout<< "rbpb"<<endl;
-        // cout<< rbpb<<endl;
-        * //Find delta_x
-        MatrixXd delta_x(4,1);
-        MatrixXd x_state(4,1);
-        x_state<<q_slider,ry;
-        delta_x=x_state-x_des;
-        * */
+        cout<<"delta_x"<<endl;
+        cout<<delta_x<<endl;
+        cout<<"ripi"<<endl;
+        cout<<ripi<<endl;
+        cout<<"ribi"<<endl;
+        cout<<ribi<<endl;
+        cout<<"q_pusher"<<endl;
+        cout<<q_pusher<<endl;
+
+        // * */
         //----------------Find delta_x: Target Tracking-----------------------------------
+        /*
         //Find position d
         MatrixXd ripi(2,1);
         MatrixXd ribi(2,1);
@@ -195,7 +196,6 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         ribi<<q_slider(0),q_slider(1);
         ripb = ripi-ribi;
         rbpb = Cbi*ripb;
-        // rx = rbpb(0);
         rx = -0.09/2;
         ry = rbpb(1);
         printf("rx, ry: %f %f \n", rx, ry);
@@ -204,7 +204,6 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         MatrixXd ritb(2,1);
         MatrixXd rbtb(2,1);
         MatrixXd vcbi(2,1);
-        // MatrixXd Cci(2,2);
         double theta_rel;
         double theta_g;
         //
@@ -231,11 +230,9 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
 	mycomplex = log(mycomplex);
 	theta_rel = -mycomplex.imag();
 	theta_g = theta - theta_rel;
-        // Cci << cos(theta), sin(theta), -sin(theta), cos(theta);
-        // vcbi = Cci*
-        //Compute delta x
         MatrixXd delta_x(4,1);
         delta_x << 0,0,theta_rel, ry;
+        * */
 
         //----------------Add IC constraints-----------------------------------
 	//Doubles

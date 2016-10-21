@@ -94,6 +94,9 @@ int main(int argc,  char *argv[]){
         // if (tmp>10){break;}
     }
     //Initialize q_pusher
+    // //Hack!
+    // x_tcp=0.15;
+    // y_tcp=0;
     q_pusher(0) = x_tcp;
     q_pusher(1) = y_tcp;
     
@@ -122,6 +125,7 @@ int main(int argc,  char *argv[]){
     if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, _x_tcp, _y_tcp, _z_tcp)){
         _q_pusher_sensor<<_x_tcp,_y_tcp;
         }
+        
         // cout<< "u_control"<<endl;
         // cout<< u_control<<endl; 
         // return 0;
@@ -149,6 +153,8 @@ int main(int argc,  char *argv[]){
         _q_slider = q_slider;
         _q_pusher = q_pusher;
         _u_control = u_control;
+        cout<<"_u_control"<<endl;
+        cout<<_u_control<<endl;
         TimeGlobal = time;
         // cout<< "u_control"<<endl;
         // cout<< u_control<<endl;
@@ -165,12 +171,12 @@ int main(int argc,  char *argv[]){
                 //Convert u_control from body to intertial reference frame
                 theta = _q_slider(2);
                 Cbi<< cos(theta), sin(theta), -sin(theta), cos(theta);
-                vbpi(0) = _u_control(0)*1 + 0.05*1;
-                vbpi(1) = _u_control(1)*1;
+                vbpi(0) = _u_control(0)*0 + 0.05*1;
+                vbpi(1) = _u_control(1)*0;
                 vipi = Cbi.transpose()*vbpi;
             }
-            x_tcp = x_tcp + h*vipi(0);
-            y_tcp = y_tcp + h*vipi(1);
+            x_tcp = x_tcp + h*vbpi(0);
+            y_tcp = y_tcp + h*vbpi(1);
         }
         // cout<< x_tcp<<endl;
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
@@ -178,7 +184,6 @@ int main(int argc,  char *argv[]){
         EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         
         //Sleep for 1000Hz loop
-        // usleep(1000);
         r.sleep();
     }
     cout<< "End of Program"<<endl;
