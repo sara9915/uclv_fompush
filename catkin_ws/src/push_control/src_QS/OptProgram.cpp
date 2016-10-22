@@ -48,6 +48,7 @@ void *rriMain(void *thread_arg)
     Push &Stick= *pStick;
     Push &Up   = *pUp;
     Push &Down = *pDown;
+    int FlagStick;
     //**********************************************************************
     //************************ Begin Loop **********************************
     //**********************************************************************
@@ -63,7 +64,7 @@ void *rriMain(void *thread_arg)
         //Update Model
         Stick.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
         Down.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
-        Up.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
+        FlagStick = Up.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
         //Optimize Models
         try{
         fval1 = Stick.OptimizeModel();}
@@ -86,21 +87,26 @@ void *rriMain(void *thread_arg)
         min = fval.minCoeff(&minIndex, &maxCol); 
         //Assign new control input to shared variables
         pthread_mutex_lock(&nonBlockMutex);
-        cout<<"Stick"<<endl;
-        cout<<Stick.delta_u<<endl;
-        cout<<fval1<<endl;
-        cout<<"Up"<<endl;
-        cout<<Up.delta_u<<endl;
-        cout<<fval2<<endl;
-        cout<<"Down"<<endl;
-        cout<<Down.delta_u<<endl;
-        cout<<fval3<<endl;
+        // cout<<"Stick"<<endl;
+        // cout<<Stick.delta_u<<endl;
+        // cout<<fval1<<endl;
+        // cout<<"Up"<<endl;
+        // cout<<Up.delta_u<<endl;
+        // cout<<fval2<<endl;
+        // cout<<"Down"<<endl;
+        // cout<<Down.delta_u<<endl;
+        // cout<<fval3<<endl;
         if (minIndex==0){ u_control = Stick.delta_u; 
             }
         else if (minIndex==1){  u_control = Up.delta_u;
             }
         else{   u_control = Down.delta_u;
             }
+            cout<< "u_control"<<endl;
+            cout<< u_control<<endl;
+            cout<< "minIndex"<<endl;
+            cout<< minIndex<<endl;
+        // if(FlagStick==1){u_control = Stick.delta_u;}
         pthread_mutex_unlock(&nonBlockMutex);
         //Remove Contraints
         Stick.RemoveConstraints();
@@ -111,4 +117,3 @@ void *rriMain(void *thread_arg)
     //*********** End Loop **************************************************
     pthread_exit((void*) 0);
 }
-

@@ -37,8 +37,8 @@ void CreateSensorMessage(EgmSensor* pSensorMessage, float x, float y)
     EgmCartesian *pc = new EgmCartesian();
     //float z = 0.221;  //pu
     float z = 0.230;  //plywood
-    if(x > 0.5) x = 0.5;
-    if(x < 0.15) x = 0.15;
+    if(x > 0.55) x = 0.55;
+    if(x < 0.10) x = 0.10;
     if(y > 0.2) y = 0.2;
     if(y < -0.2) y = -0.2;
     pc->set_x(x*1000);    // convert to robot representation mm
