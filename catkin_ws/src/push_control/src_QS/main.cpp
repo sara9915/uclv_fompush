@@ -215,7 +215,7 @@ int main(int argc,  char *argv[]){
     JsonOutput["vipiJSON"] = vipiJSON;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/StraightLine_2016_10_23_3TargetTracking2PlywoodNoLighting.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/StraightLine_2016_10_23_3TargetTracking3PlywoodNoLighting.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
     
