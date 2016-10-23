@@ -86,7 +86,7 @@ public:
 	void SetVariableType();
 	void BuildModel();
 	double OptimizeModel();
-	int UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher);
+	void UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher);
 	void RemoveConstraints();
 	
 

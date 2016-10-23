@@ -18,7 +18,7 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" />
 
   <node pkg="tf" type="static_transform_publisher" name="viconworldlink_broadcaster" 
-  args=" 2.46144100e-01 -1.02486267e-02 5.32326997e-03 6.77834294e-04 -1.68484558e-03 -7.17882913e-01 6.96161494e-01 /map /viconworld 100" />
+  args=" 1.73843843e-01 1.88927175e-02 4.55333648e-03 -3.27791571e-04 -2.60692085e-03 -7.26470199e-01 6.87192947e-01 /map /viconworld 100" />
 
   <node pkg="tf" type="static_transform_publisher" name="vicontip_broadcaster" args="0 0 0.23487 0 0 0 /link_6 /vicon_tip 100" /> <!-- for transferring calib tip to link6-->
 

@@ -89,7 +89,7 @@ int main(int argc,  char *argv[]){
         cout << " ros::ok() " << ros::ok() << endl;
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
             has_robot = true;
-            CreateSensorMessage(pSensorMessage,0.15,0.0);
+            CreateSensorMessage(pSensorMessage,0.15,0);
             pSensorMessage->SerializeToString(&messageBuffer);
             EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         }
@@ -166,7 +166,7 @@ int main(int argc,  char *argv[]){
           {x_tcp = x_tcp;
           }
         else{    
-            if (x_tcp>0.55){
+            if (x_tcp>0.55 or Flag==4){
                 vipi(0) = 0;
                 vipi(1) = 0;}
             else{
@@ -215,7 +215,7 @@ int main(int argc,  char *argv[]){
     JsonOutput["vipiJSON"] = vipiJSON;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/StraightLineBigPertubations5.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/StraightLine_2016_10_23_StraightLineDoublePerturbationsPlywoodNoLighting.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
     

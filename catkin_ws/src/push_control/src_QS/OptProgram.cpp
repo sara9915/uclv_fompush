@@ -64,7 +64,7 @@ void *rriMain(void *thread_arg)
         //Update Model
         Stick.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
         Down.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
-        FlagStick = Up.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
+        Up.UpdateICModel(TimeGlobal,_q_slider_,_q_pusher_);
         //Optimize Models
         try{
         fval1 = Stick.OptimizeModel();}
