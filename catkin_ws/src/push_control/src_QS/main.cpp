@@ -89,7 +89,7 @@ int main(int argc,  char *argv[]){
         cout << " ros::ok() " << ros::ok() << endl;
         if(getRobotPose(EGMsock, sourceAddress, sourcePort, pRobotMessage, x_tcp, y_tcp, z_tcp)){
             has_robot = true;
-            CreateSensorMessage(pSensorMessage,0.15,-0.05);
+            CreateSensorMessage(pSensorMessage,0.15,0);
             pSensorMessage->SerializeToString(&messageBuffer);
             EGMsock->sendTo(messageBuffer.c_str(), messageBuffer.length(), sourceAddress, sourcePort);
         }
@@ -173,12 +173,12 @@ int main(int argc,  char *argv[]){
                 //Convert u_control from body to intertial reference frame
                 theta = _q_slider(2);
                 Cbi<< cos(theta), sin(theta), -sin(theta), cos(theta);
-                vbpi(0) = _u_control(0)*1 + 0.05*1;
-                vbpi(1) = _u_control(1)*1;
+                vbpi(0) = _u_control(0)*0 + 0.05*1;
+                vbpi(1) = _u_control(1)*0;
                 vipi = Cbi.transpose()*vbpi;
             }
-            x_tcp = x_tcp + h*vipi(0);
-            y_tcp = y_tcp + h*vipi(1);
+            x_tcp = x_tcp + h*vbpi(0);
+            y_tcp = y_tcp + h*vbpi(1);
             
             // Update JSON Arrays
             timeJSON.append(time);
@@ -215,7 +215,7 @@ int main(int argc,  char *argv[]){
     JsonOutput["vipiJSON"] = vipiJSON;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/StraightLine_2016_10_23_3TargetTrackingBlackNoLighting.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/StraightLine_2016_10_23_StraightLineOpenLoopAmbientLight.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
     
