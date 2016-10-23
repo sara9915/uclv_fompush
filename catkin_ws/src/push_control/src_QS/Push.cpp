@@ -142,7 +142,7 @@ return objval;
 void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
 {       
         //----------------Find delta_x: Trajectory Tracking-----------------------------------
-        
+        /*
         //Uncomment this part for trajectory tracking mode
         //Find desired state
         double FlagStick=0;
@@ -177,9 +177,9 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         // cout<< delta_x<<endl;
         // cout<< "rbpb"<<endl;
         cout<< rbpb<<endl;
-        
+        */
         //----------------Find delta_x: Target Tracking-----------------------------------
-        /*
+        
         //Find position d
         MatrixXd ripi(2,1);
         MatrixXd ribi(2,1);
@@ -207,7 +207,7 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         double theta_g;
         //
         if (Flag==0){
-                riti << .2+.1,1*-.12;
+                riti << .2+.17,1*-.11;
                 ritb = riti - ribi;
                 cout<< "riti"<<endl;
                 cout<< riti<<endl;
@@ -215,27 +215,14 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
                 cout<< ribi<<endl;
                 if (ritb.norm()<0.02){Flag=1;}}
         else if (Flag==1){
-                riti << .2+.17,1*-.12;
+                riti << .2+.17,.11;
                 ritb = riti - ribi;
-                cout<< "riti"<<endl;
-                cout<< riti<<endl;
-                cout<< "ribi"<<endl;
-                cout<< ribi<<endl;
-                if (ritb.norm()<0.02){Flag=2;}}
-        else if (Flag==2){
-                riti << .2+.17,.12;
-                ritb = riti - ribi;
-                if (ritb.norm()<0.02){Flag=3;}
+                if (ritb.norm()<0.02){Flag=2;}
         }
-        // else if (Flag==3){
-                // riti << .2+.1,.12;
-                // ritb = riti - ribi;
-                // if (ritb.norm()<0.02){Flag=4;}
-        // }
-        else if (Flag==3){
-                riti << 0,0.12;
+        else if (Flag==2){
+                riti << 0.07,-0.0035;
                 ritb = riti - ribi;
-                if (ritb.norm()<0.15){Flag=4;}
+                if (ritb.norm()<0.15){Flag=3;}
         }
         rbtb = Cbi*ritb;
         complex<double> mycomplex (rbtb(0), rbtb(1));
@@ -250,7 +237,7 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         cout<< "delta_x"<<endl;
         cout<< delta_x<<endl;
         
-        */
+        
         // if (abs(delta_x(2))<0.09 && abs(ry)<0.005 || abs(ry)>0.02){FlagStick=1;}
 
         //----------------Add IC constraints-----------------------------------
