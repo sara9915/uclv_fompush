@@ -16,12 +16,12 @@ void *rriMain(void *thread_arg)
     //~ //Define variables from argument pointers
     pthread_mutex_lock(&nonBlockMutex);
 
-    MatrixXd *pq_slider = my_data->_q_slider;
-    MatrixXd *pq_pusher = my_data->_q_pusher;
+    MatrixXd *pq_slider  = my_data->_q_slider;
+    MatrixXd *pq_pusher  = my_data->_q_pusher;
     MatrixXd *pu_control = my_data->_u_control;
-    MatrixXd &q_slider = *pq_slider;
-    MatrixXd &q_pusher = *pq_pusher;
-    MatrixXd &u_control = *pu_control;
+    MatrixXd &q_slider   = *pq_slider;
+    MatrixXd &q_pusher   = *pq_pusher;
+    MatrixXd &u_control  = *pu_control;
 
     pthread_mutex_unlock(&nonBlockMutex);
     
