@@ -24,6 +24,8 @@ Json::Value q_sliderJSON;
 Json::Value q_pusher_sensedJSON;
 Json::Value q_pusher_commandedJSON;
 Json::Value u_controlJSON;
+Json::Value u_controlMPCJSON;
+Json::Value delta_xMPCJSON;
 Json::Value vipiJSON;
 //*********************** Main Program *************************************
 int main(int argc,  char *argv[]){
@@ -44,9 +46,13 @@ int main(int argc,  char *argv[]){
     MatrixXd _q_pusher_sensor(2,1);
     MatrixXd q_slider(3,1);
     MatrixXd u_control(2,1);
+    MatrixXd u_controlMPC(2,35);
+    MatrixXd delta_xMPC(4,35);
     MatrixXd _q_pusher(2,1);
     MatrixXd _q_slider(3,1);
     MatrixXd _u_control(2,1);
+	MatrixXd _u_controlMPC(2,35);
+	MatrixXd _delta_xMPC(4,35);
     MatrixXd vipi(2,1);
     MatrixXd vbpi(2,1);
     MatrixXd Cbi(2,2);
@@ -67,6 +73,8 @@ int main(int argc,  char *argv[]){
     thread_data_array[0]._q_pusher = &q_pusher;
     thread_data_array[0]._q_slider = &q_slider;
     thread_data_array[0]._u_control = &u_control;
+    thread_data_array[0]._u_controlMPC = &u_controlMPC;
+    thread_data_array[0]._delta_xMPC = &delta_xMPC;
     // Create socket and wait for robot's connection
     UDPSocket* EGMsock;
     const int portNumber = 6510;
@@ -161,6 +169,8 @@ int main(int argc,  char *argv[]){
         _q_slider = q_slider;
         _q_pusher = q_pusher;
         _u_control = u_control;
+        _u_controlMPC = u_controlMPC;
+        _delta_xMPC = delta_xMPC;
         TimeGlobal = time;
         // cout<< "u_control"<<endl;
         // cout<< u_control<<endl;
@@ -186,19 +196,20 @@ int main(int argc,  char *argv[]){
             
             // Update JSON Arrays
             timeJSON.append(time);
-            q_sliderJSON[0].append(_q_slider(0));
-            q_sliderJSON[1].append(_q_slider(1));
-            q_sliderJSON[2].append(_q_slider(2));
             q_pusher_sensedJSON[0].append(_x_tcp);
             q_pusher_sensedJSON[1].append(_y_tcp);
             q_pusher_commandedJSON[0].append(x_tcp);
             q_pusher_commandedJSON[1].append(y_tcp);
-            u_controlJSON[0].append(_u_control(0));
-            u_controlJSON[1].append(_u_control(1));
-            vipiJSON[0].append(vipi(0));
-            vipiJSON[1].append(vipi(1));
-       
-        
+            for (int j =0;j<3;j++)
+			{
+				q_sliderJSON[j].append(_q_slider(j));
+			}
+			
+			for (int j =0;j<2;j++)
+			{
+				u_controlJSON[j].append(_u_control(j));
+				vipiJSON[j].append(vipi(j));
+			}
         }
         // cout<< x_tcp<<endl;
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
@@ -219,7 +230,7 @@ int main(int argc,  char *argv[]){
     JsonOutput["vipiJSON"] = vipiJSON;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/StraightLine_2016_10_23_StraightLineOpenLoopAmbientLight.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Test.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
     

@@ -16,12 +16,17 @@ void *rriMain(void *thread_arg)
     //~ //Define variables from argument pointers
     pthread_mutex_lock(&nonBlockMutex);
 
-    MatrixXd *pq_slider  = my_data->_q_slider;
-    MatrixXd *pq_pusher  = my_data->_q_pusher;
-    MatrixXd *pu_control = my_data->_u_control;
-    MatrixXd &q_slider   = *pq_slider;
-    MatrixXd &q_pusher   = *pq_pusher;
-    MatrixXd &u_control  = *pu_control;
+    MatrixXd *pq_slider     = my_data->_q_slider;
+    MatrixXd *pq_pusher     = my_data->_q_pusher;
+    MatrixXd *pu_control    = my_data->_u_control;
+    MatrixXd *pu_controlMPC = my_data->_u_controlMPC;
+    MatrixXd *pdelta_xMPC   = my_data->_delta_xMPC;
+
+    MatrixXd &q_slider     = *pq_slider;
+    MatrixXd &q_pusher     = *pq_pusher;
+    MatrixXd &u_control    = *pu_control;
+    MatrixXd &u_controlMPC = *pu_controlMPC;
+    MatrixXd &delta_xMPC   = *pdelta_xMPC;
 
     pthread_mutex_unlock(&nonBlockMutex);
     
@@ -102,10 +107,10 @@ void *rriMain(void *thread_arg)
             }
         else{   u_control = Down.delta_u;
             }
-            cout<< "u_control"<<endl;
-            cout<< u_control<<endl;
-            cout<< "minIndex"<<endl;
-            cout<< minIndex<<endl;
+            //~ cout<< "u_control"<<endl;
+            //~ cout<< u_control<<endl;
+            //~ cout<< "minIndex"<<endl;
+            //~ cout<< minIndex<<endl;
         // if(FlagStick==1){u_control = Stick.delta_u;}
         pthread_mutex_unlock(&nonBlockMutex);
         //Remove Contraints
