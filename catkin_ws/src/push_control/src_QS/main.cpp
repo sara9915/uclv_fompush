@@ -26,6 +26,7 @@ Json::Value q_pusher_commandedJSON;
 Json::Value u_controlJSON;
 Json::Value delta_uMPCJSON;
 Json::Value delta_xMPCJSON;
+
 Json::Value vipiJSON;
 //*********************** Main Program *************************************
 int main(int argc,  char *argv[]){
@@ -51,8 +52,8 @@ int main(int argc,  char *argv[]){
     MatrixXd _q_pusher(2,1);
     MatrixXd _q_slider(3,1);
     MatrixXd _u_control(2,1);
-	MatrixXd _delta_uMPC(2,35);
-	MatrixXd _delta_xMPC(4,35);
+	MatrixXd _delta_uMPC(70,1);
+	MatrixXd _delta_xMPC(140,1);
     MatrixXd vipi(2,1);
     MatrixXd vbpi(2,1);
     MatrixXd Cbi(2,2);
@@ -209,11 +210,15 @@ int main(int argc,  char *argv[]){
 				vipiJSON[j].append(vipi(j));
 			}
             
-            for (int j =0;j<NUM_STEPS;j++)
+            for (int j =0;j<70;j++)
 			{
 				delta_uMPCJSON[j].append(_delta_uMPC(j));
+			}
+            for (int j =0;j<140;j++)
+			{
 				delta_xMPCJSON[j].append(_delta_xMPC(j));
 			}
+            
             
         }
         // cout<< x_tcp<<endl;
