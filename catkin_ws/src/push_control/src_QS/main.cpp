@@ -186,8 +186,8 @@ int main(int argc,  char *argv[]){
                 //Convert u_control from body to intertial reference frame
                 theta = _q_slider(2);
                 Cbi<< cos(theta), sin(theta), -sin(theta), cos(theta);
-                vbpi(0) = _u_control(0)*0 + 0.05*1;
-                vbpi(1) = _u_control(1)*0;
+                vbpi(0) = _u_control(0)*1 + 0.05*1;
+                vbpi(1) = _u_control(1)*1;
                 vipi = Cbi.transpose()*vbpi;
             }
             x_tcp = x_tcp + h*vbpi(0);
@@ -242,7 +242,7 @@ int main(int argc,  char *argv[]){
     JsonOutput["vipiJSON"] = vipiJSON;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/TestDataMPC.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/FeedbackMPCPlot.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
     
