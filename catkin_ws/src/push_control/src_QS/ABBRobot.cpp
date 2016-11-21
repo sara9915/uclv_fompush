@@ -127,6 +127,7 @@ bool getViconPose(MatrixXd& q_slider, TransformListener& listener){
         tf::Matrix3x3 m(q);
         double roll, pitch, yaw;
         m.getRPY(roll, pitch, yaw);
+         
         
         q_slider << obj_pose.getOrigin().getX()- 0.0, obj_pose.getOrigin().getY()+ 0.0, yaw - 0*0.205681;
         return true;
