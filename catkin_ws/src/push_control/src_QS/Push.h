@@ -32,6 +32,8 @@ class Push {
 		MatrixXd ub;
 		MatrixXd Q;
 		MatrixXd delta_u;
+		MatrixXd solutionU;
+		MatrixXd solutionX;
 		//2d Arrays
 		//1d Arrays
 		char sense[NUM_CONSTRAINTS];

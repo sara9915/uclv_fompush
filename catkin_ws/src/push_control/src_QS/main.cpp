@@ -24,7 +24,7 @@ Json::Value q_sliderJSON;
 Json::Value q_pusher_sensedJSON;
 Json::Value q_pusher_commandedJSON;
 Json::Value u_controlJSON;
-Json::Value u_controlMPCJSON;
+Json::Value delta_uMPCJSON;
 Json::Value delta_xMPCJSON;
 Json::Value vipiJSON;
 //*********************** Main Program *************************************
@@ -46,12 +46,12 @@ int main(int argc,  char *argv[]){
     MatrixXd _q_pusher_sensor(2,1);
     MatrixXd q_slider(3,1);
     MatrixXd u_control(2,1);
-    MatrixXd u_controlMPC(2,35);
+    MatrixXd delta_uMPC(2,35);
     MatrixXd delta_xMPC(4,35);
     MatrixXd _q_pusher(2,1);
     MatrixXd _q_slider(3,1);
     MatrixXd _u_control(2,1);
-	MatrixXd _u_controlMPC(2,35);
+	MatrixXd _delta_uMPC(2,35);
 	MatrixXd _delta_xMPC(4,35);
     MatrixXd vipi(2,1);
     MatrixXd vbpi(2,1);
@@ -73,7 +73,7 @@ int main(int argc,  char *argv[]){
     thread_data_array[0]._q_pusher = &q_pusher;
     thread_data_array[0]._q_slider = &q_slider;
     thread_data_array[0]._u_control = &u_control;
-    thread_data_array[0]._u_controlMPC = &u_controlMPC;
+    thread_data_array[0]._delta_uMPC = &delta_uMPC;
     thread_data_array[0]._delta_xMPC = &delta_xMPC;
     // Create socket and wait for robot's connection
     UDPSocket* EGMsock;
@@ -169,11 +169,9 @@ int main(int argc,  char *argv[]){
         _q_slider = q_slider;
         _q_pusher = q_pusher;
         _u_control = u_control;
-        _u_controlMPC = u_controlMPC;
+        _delta_uMPC = delta_uMPC;
         _delta_xMPC = delta_xMPC;
         TimeGlobal = time;
-        // cout<< "u_control"<<endl;
-        // cout<< u_control<<endl;
         pthread_mutex_unlock(&nonBlockMutex);
         //Position Control Parameters --------------------------------------------------------------------------------------------------
         if (time<=1)
@@ -187,8 +185,8 @@ int main(int argc,  char *argv[]){
                 //Convert u_control from body to intertial reference frame
                 theta = _q_slider(2);
                 Cbi<< cos(theta), sin(theta), -sin(theta), cos(theta);
-                vbpi(0) = _u_control(0)*1 + 0.05*1;
-                vbpi(1) = _u_control(1)*1;
+                vbpi(0) = _u_control(0)*0 + 0.05*1;
+                vbpi(1) = _u_control(1)*0;
                 vipi = Cbi.transpose()*vbpi;
             }
             x_tcp = x_tcp + h*vbpi(0);
@@ -210,6 +208,13 @@ int main(int argc,  char *argv[]){
 				u_controlJSON[j].append(_u_control(j));
 				vipiJSON[j].append(vipi(j));
 			}
+            
+            for (int j =0;j<NUM_STEPS;j++)
+			{
+				delta_uMPCJSON[j].append(_delta_uMPC(j));
+				delta_xMPCJSON[j].append(_delta_xMPC(j));
+			}
+            
         }
         // cout<< x_tcp<<endl;
         CreateSensorMessage(pSensorMessage, x_tcp, y_tcp);
@@ -227,10 +232,12 @@ int main(int argc,  char *argv[]){
     JsonOutput["q_pusher_sensedJSON"] = q_pusher_sensedJSON;
     JsonOutput["q_pusher_commandedJSON"] = q_pusher_commandedJSON;
     JsonOutput["u_controlJSON"] = u_controlJSON;
+    JsonOutput["delta_uMPCJSON"] = delta_uMPCJSON;
+    JsonOutput["delta_xMPCJSON"] = delta_xMPCJSON;
     JsonOutput["vipiJSON"] = vipiJSON;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/Test.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/TestDataMPC.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
     

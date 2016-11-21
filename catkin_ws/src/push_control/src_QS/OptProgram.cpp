@@ -19,13 +19,13 @@ void *rriMain(void *thread_arg)
     MatrixXd *pq_slider     = my_data->_q_slider;
     MatrixXd *pq_pusher     = my_data->_q_pusher;
     MatrixXd *pu_control    = my_data->_u_control;
-    MatrixXd *pu_controlMPC = my_data->_u_controlMPC;
+    MatrixXd *pdelta_uMPC   = my_data->_delta_uMPC;
     MatrixXd *pdelta_xMPC   = my_data->_delta_xMPC;
 
     MatrixXd &q_slider     = *pq_slider;
     MatrixXd &q_pusher     = *pq_pusher;
     MatrixXd &u_control    = *pu_control;
-    MatrixXd &u_controlMPC = *pu_controlMPC;
+    MatrixXd &delta_uMPC   = *pdelta_uMPC;
     MatrixXd &delta_xMPC   = *pdelta_xMPC;
 
     pthread_mutex_unlock(&nonBlockMutex);
@@ -92,26 +92,23 @@ void *rriMain(void *thread_arg)
         min = fval.minCoeff(&minIndex, &maxCol); 
         //Assign new control input to shared variables
         pthread_mutex_lock(&nonBlockMutex);
-        // cout<<"Stick"<<endl;
-        // cout<<Stick.delta_u<<endl;
-        // cout<<fval1<<endl;
-        // cout<<"Up"<<endl;
-        // cout<<Up.delta_u<<endl;
-        // cout<<fval2<<endl;
-        // cout<<"Down"<<endl;
-        // cout<<Down.delta_u<<endl;
-        // cout<<fval3<<endl;
-        if (minIndex==0){ u_control = Stick.delta_u; 
+
+        if (minIndex==0){ 
+            u_control  = Stick.delta_u; 
+            delta_uMPC = Stick.solutionU; 
+            delta_xMPC = Stick.solutionX; 
             }
-        else if (minIndex==1){  u_control = Up.delta_u;
+        else if (minIndex==1){  
+            u_control  = Up.delta_u;
+            delta_uMPC = Up.solutionU; 
+            delta_xMPC = Up.solutionX;
             }
-        else{   u_control = Down.delta_u;
+        else{   
+            u_control  = Down.delta_u;
+            delta_uMPC = Down.solutionU; 
+            delta_xMPC = Down.solutionX;
             }
-            //~ cout<< "u_control"<<endl;
-            //~ cout<< u_control<<endl;
-            //~ cout<< "minIndex"<<endl;
-            //~ cout<< minIndex<<endl;
-        // if(FlagStick==1){u_control = Stick.delta_u;}
+
         pthread_mutex_unlock(&nonBlockMutex);
         //Remove Contraints
         Stick.RemoveConstraints();

@@ -15,6 +15,8 @@ Push::Push(int _Family):
 	ub.resize(NUM_VARIABLES,1);
 	Q.resize(NUM_VARIABLES, NUM_VARIABLES);
         delta_u.resize(2,1);
+        solutionU.resize(NUM_UVARIABLES*NUM_STEPS,1);
+        solutionX.resize(NUM_XVARIABLES*NUM_STEPS,1);
 	//Initialize scalars
 	a = 0.09;
 	b = a;
@@ -122,6 +124,7 @@ void Push::BuildModel()
 //*******************************************************************************************
 double Push::OptimizeModel()
 {   
+        double counter1 = 0;
 	model.optimize();
 	if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
 		objval = model.get(GRB_DoubleAttr_ObjVal);
@@ -134,7 +137,16 @@ double Push::OptimizeModel()
 			}
 	}
         for (int i=0;i<2;i++){delta_u(i,0) = solution[i];}
-	//~ success = true;
+        // Retrieve U solutions
+        // cout<< NUM_UVARIABLES*NUM_STEPS<<endl;
+        for (int i=0;i<NUM_VARIABLES;i++){
+                if (i<NUM_UVARIABLES*NUM_STEPS){
+                        solutionU(i,0) = solution[i];
+                        }
+                else{solutionX(counter1,0) = solution[i];
+                        counter1+=1;}
+                }
+
 	
 return objval;
 }
