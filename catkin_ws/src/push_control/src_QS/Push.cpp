@@ -154,7 +154,7 @@ return objval;
 void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
 {       
         //----------------Find delta_x: Trajectory Tracking-----------------------------------
-       
+       /*
         //Uncomment this part for trajectory tracking mode
         //Find desired state
         double FlagStick=0;
@@ -191,9 +191,9 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         cout<< q_slider<<endl;
         // cout<< "rbpb"<<endl;
         cout<< rbpb<<endl;
- 
+ */
         //----------------Find delta_x: Target Tracking-----------------------------------
-        /*
+        
         //Find position d
         MatrixXd ripi(2,1);
         MatrixXd ribi(2,1);
@@ -221,7 +221,7 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         double theta_g;
         //
         if (Flag==0){
-                riti << .2+.17,1*-.11;
+                riti << .2+.17,1*-.09;
                 ritb = riti - ribi;
                 cout<< "riti"<<endl;
                 cout<< riti<<endl;
@@ -229,7 +229,7 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
                 cout<< ribi<<endl;
                 if (ritb.norm()<0.02){Flag=1;}}
         else if (Flag==1){
-                riti << .2+.17,.11;
+                riti << .2+.17,.09;
                 ritb = riti - ribi;
                 if (ritb.norm()<0.02){Flag=2;}
         }
@@ -250,7 +250,7 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         delta_x << 0,0,theta_rel, ry;
         cout<< "delta_x"<<endl;
         cout<< delta_x<<endl;
-*/
+
         //----------------Add IC constraints-----------------------------------
 	//Doubles
 	double E, E1, E2;
