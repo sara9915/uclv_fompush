@@ -185,8 +185,10 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         MatrixXd x_state(4,1);
         x_state<<q_slider,ry;
         delta_x=x_state-x_des;
-        // cout<< "delta_x"<<endl;
-        // cout<< delta_x<<endl;
+        cout<< "delta_x"<<endl;
+        cout<< delta_x<<endl;
+        cout<< "q_slider"<<endl;
+        cout<< q_slider<<endl;
         // cout<< "rbpb"<<endl;
         cout<< rbpb<<endl;
  
@@ -248,7 +250,6 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         delta_x << 0,0,theta_rel, ry;
         cout<< "delta_x"<<endl;
         cout<< delta_x<<endl;
-
 */
         //----------------Add IC constraints-----------------------------------
 	//Doubles

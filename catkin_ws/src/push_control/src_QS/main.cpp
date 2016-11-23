@@ -242,7 +242,7 @@ int main(int argc,  char *argv[]){
     JsonOutput["vipiJSON"] = vipiJSON;
     
     ofstream myOutput;
-    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/MPC_TrajectoryTest.json");
+    myOutput.open ("/home/mcube/cpush/catkin_ws/src/push_control/data/AddedMassClosedLoopStraight01.json");
     myOutput << styledWriter.write(JsonOutput);
     myOutput.close();
     

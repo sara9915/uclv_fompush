@@ -97,6 +97,8 @@ void *rriMain(void *thread_arg)
             u_control  = Stick.delta_u; 
             delta_uMPC = Stick.solutionU; 
             delta_xMPC = Stick.solutionX; 
+            cout<< "u_control"<<endl;
+            cout<< u_control<<endl;
             }
         else if (minIndex==1){  
             u_control  = Up.delta_u;
