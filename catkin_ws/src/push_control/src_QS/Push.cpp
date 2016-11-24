@@ -38,7 +38,7 @@ void Push::ReadMatrices()
     Json::Reader reader;
     //Load Json file
     // ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/Matrices.json");
-    ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/MatricesTarget.json");
+    ifstream file("/home/mcube/cpush/catkin_ws/src/push_control/src_QS/Data/MatricesTarget2.json");
     file >> root; 
     string Ain_string;
     string bin_string;
@@ -221,7 +221,7 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
         double theta_g;
         //
         if (Flag==0){
-                riti << .2+.17,1*-.09;
+                riti << .2+.17,1*-.11;
                 ritb = riti - ribi;
                 cout<< "riti"<<endl;
                 cout<< riti<<endl;
@@ -229,7 +229,7 @@ void Push::UpdateICModel(double time, MatrixXd q_slider, MatrixXd q_pusher)
                 cout<< ribi<<endl;
                 if (ritb.norm()<0.02){Flag=1;}}
         else if (Flag==1){
-                riti << .2+.17,.09;
+                riti << .2+.17,.11;
                 ritb = riti - ribi;
                 if (ritb.norm()<0.02){Flag=2;}
         }
