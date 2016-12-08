@@ -32,7 +32,6 @@
 # Simulation ignore
 Simulation/ClosedLoopPushing/img
 Simulation/ClosedLoopPushing/vid
-Simulation/ClosedLoopPushing/data
 
 # Catkin ignore
 catkin_ws/build
