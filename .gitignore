@@ -21,6 +21,20 @@
 *.app
 *.pyc
 
+# Images and videos
+*.png
+*.jpg
+*.avi
+*.ogg
+*.ogv
+*.mp3
+
+# Simulation ignore
+Simulation/ClosedLoopPushing/img
+Simulation/ClosedLoopPushing/vid
+Simulation/ClosedLoopPushing/data
+
+# Catkin ignore
 catkin_ws/build
 catkin_ws/devel
 catkin_ws/.catkin_workspace
