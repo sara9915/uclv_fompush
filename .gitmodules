@@ -28,3 +28,6 @@
 [submodule "ros_ws/netft"]
 	path = ros_ws/netft
 	url = git@github.mit.edu:mCube/netft.git
+[submodule "software/externals/gurobi"]
+	path = software/externals/gurobi
+	url = https://github.com/RobotLocomotion/gurobi.git

@@ -6,11 +6,9 @@ clear all;
 close all;
 clc;
 %Initialize Drake
-%run('/Users/Francois/Dropbox (MIT)/Matlab/MIT/Drake/drake/addpath_drake');
-run('~/gelsight/software/externals/drake/addpath_drake');
-%%Add path
-%addpath(fullfile('/Users/Francois/Dropbox (MIT)/Matlab/MIT/System'));
-addpath(fullfile('~/testscripts/System'));
+run('../../software/externals/drake/addpath_drake');
+%%Add System path
+addpath(fullfile('../System'));
 
 %% Simulation Parameters
 t0 = 0;

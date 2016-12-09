@@ -1,3 +1,4 @@
+%% Initialize data of the specific experiment
 load('Data.mat')
 %% Initialize video
 video = VideoReader('TrialExperiment.ogv');

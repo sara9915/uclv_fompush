@@ -9,7 +9,7 @@ y = 13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t); % The values for
 numImages = 13; % Number of images to calibrate
 files = cell(1, numImages);
 for i = 1:numImages % The images are stored in a cell
-   files{i} = fullfile(sprintf('image%d.jpg', i));
+   files{i} = fullfile(sprintf('img/image%d.jpg', i));
 end
 squareSize = 26.5; % in millimeters
 %% Image and world points generation
@@ -23,7 +23,7 @@ worldPoints = generateCheckerboardPoints(boardSize, squareSize);
 cameraParams = estimateCameraParameters(imagePoints, worldPoints);
 %% Extrinsics computation for the recording position
 % The image taken from the recording position is loaded and displayed
-imOrig = imread(fullfile('image14.jpg'));
+imOrig = imread(fullfile('img/image14.jpg'));
 figure; imshow(imOrig);
 im = undistortImage(imOrig, cameraParams); % The image is undistorted
 % The procedure was repeated in the Matlab website, presumably to allow the
