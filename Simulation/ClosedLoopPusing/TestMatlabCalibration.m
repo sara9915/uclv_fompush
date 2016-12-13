@@ -1,8 +1,10 @@
 %% Initialize the trajectory. Hopefully, only these lines will be changed
-N = 100; % Select number of points in the trajectory
+N = 200; % Select number of points in the trajectory
 t = linspace(0, 2*pi, N);
-x = 16 * sin(t).^3; % Store a vector for x and one for y with the positions
-y = 13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t); % The values for
+% x = 16 * sin(t).^3; % Store a vector for x and one for y with the positions
+% y = 13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t); % The values for
+x = 40 * t;
+y = 0;
 % X and Y MUST be provided in mm. The size of one square is currently 26.5
 
 %% Image calibration setup
@@ -24,7 +26,6 @@ cameraParams = estimateCameraParameters(imagePoints, worldPoints);
 %% Extrinsics computation for the recording position
 % The image taken from the recording position is loaded and displayed
 imOrig = imread(fullfile('img/image14.jpg'));
-figure; imshow(imOrig);
 im = undistortImage(imOrig, cameraParams); % The image is undistorted
 % The procedure was repeated in the Matlab website, presumably to allow the
 % usage of different checkerboards for intrinsic and extrinsic calibration
@@ -44,4 +45,5 @@ trajectory(:,3) = ones(N,1);
 planarR = rotationMatrix(:,1:2); % Everything is on the same plane so we can set Z = 0
 % The trajectory in pixels is obtained, drawn and displayed
 camera_trajectory = WorldToCameraTrajectory(trajectory, M, planarR, translationVector);
-new_I = DrawTrajectoryOnImage(camera_trajectory(:,1).', camera_trajectory(:,2).', im, 'yellow');
+new_I = DrawTrajectoryOnImage(camera_trajectory(:,1).', camera_trajectory(:,2).', im);
+figure; imshow(new_I);
