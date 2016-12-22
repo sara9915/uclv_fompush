@@ -4,6 +4,7 @@
 [submodule "software/externals/snopt"]
 	path = software/externals/snopt
 	url = git@github.mit.edu:mCube/snopt.git
+	ignore = dirty
 [submodule "software/externals/eigen-pod"]
 	path = software/externals/eigen-pod
 	url = https://github.com/RobotLocomotion/eigen-pod.git
