@@ -18,7 +18,7 @@ tic;
 p = PusherSlider('Trajectory');%'Target'
 
 %% Save data in new folder
-SimName = 'SimulationResultsTest'; %Maybe add date, or even date and time, so its not overwritten
+SimName = 'SimulationResults'; %Maybe add date, or even date and time, so its not overwritten
 if  exist(SimName, 'dir') ~= 7
     mkdir(pwd, SimName);
 end
