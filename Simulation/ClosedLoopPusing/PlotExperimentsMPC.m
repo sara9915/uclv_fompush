@@ -20,10 +20,10 @@ p.ConstraintMatrices('FOM');
 p.NumSim = 1;
 
 %% Initialize name of files and folders
-p.SimName = Filename;
-mkdir(pwd,p.SimName);
-p.FilePath = strcat(pwd,'/',p.SimName);
-FileName = strcat(p.FilePath,'/',p.SimName);
+SimName = Filename;
+mkdir(pwd, SimName);
+FilePath = strcat(pwd,'/', SimName);
+FileName = strcat(FilePath,'/', SimName);
 %% Load Experiment Data
 Json.q_sliderJSON(1,:) = Json.q_sliderJSON(1,:) - 0.15*0;
 Json.q_pusher_sensedJSON(1,:) = Json.q_pusher_sensedJSON(1,:) - 0.15*0;
