@@ -1,4 +1,5 @@
-function obj = Plot(obj, Dataset)
+% TODO: Check whether this is used at all.
+function obj = Plot(obj, Dataset, file_path)
     x_state = obj.x_state{Dataset+1};
     u_state = obj.u_state{Dataset+1};
     %Convert integer to strin
@@ -15,7 +16,7 @@ function obj = Plot(obj, Dataset)
     Figures.(Name).Color = {'b','b','b'};
     Figures.(Name).Title = {Name};               
     Figures.(Name).Plot2d;
-    Figures.(Name).Save(obj.FilePath);
+    Figures.(Name).Save(file_path);
 
     Name = strcat(obj.SimName, Number, 'PusherReponse');
     Figures.(Name)=Figure;
@@ -28,7 +29,7 @@ function obj = Plot(obj, Dataset)
     Figures.(Name).Color = {'r','r'};
     Figures.(Name).Title = {Name};               
     Figures.(Name).Plot2d;
-    Figures.(Name).Save(obj.FilePath);
+    Figures.(Name).Save(file_path);
     
     Name = strcat(obj.SimName, Number, 'ControlReponse');
     Figures.(Name)=Figure;
@@ -41,7 +42,7 @@ function obj = Plot(obj, Dataset)
     Figures.(Name).Color = {'r',['r']};
     Figures.(Name).Title = {Name};               
     Figures.(Name).Plot2d;
-    Figures.(Name).Save(obj.FilePath);
+    Figures.(Name).Save(file_path);
 
     %Set object figure property 
     obj.Figures = Figures;
