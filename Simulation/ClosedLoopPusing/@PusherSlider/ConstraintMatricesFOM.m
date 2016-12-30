@@ -28,7 +28,6 @@ function obj = ConstraintMatricesFOM(obj)
             else
                 z = [1,0,0];
             end
-            
             %Set counter for Linear matrices indexes
             % TODO: Better encapsulate this in a FOM object
             if z(1) == 1
@@ -38,12 +37,10 @@ function obj = ConstraintMatricesFOM(obj)
             else
                 counter = 3;
             end
-            
             %% Cost
             H = zeros(FOM{Family}.nv, FOM{Family}.nv);
             c = zeros(FOM{Family}.nv, 1);
             % Assign cost block matrices
-            
             if lv1 < obj.steps
                 H(FOM{Family}.vars.x.i(1:length(obj.Q_MPC),lv1), FOM{Family}.vars.x.i(1:length(obj.Q_MPC),lv1)) = zeros(length(obj.Q_MPC));
                 H(FOM{Family}.vars.x.i(1:length(obj.Q_MPC),lv1), FOM{Family}.vars.x.i(1:length(obj.Q_MPC),lv1)) = obj.Q_MPC;
