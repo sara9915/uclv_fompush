@@ -1,54 +1,48 @@
 %% Euler-Integration
 function obj = EulerIntegration(obj, t0, tf, h, d0, qs0, SimulationCounter)
     %Set initial conditions
-    % TODO: Ask Frank what these variables are is r_i i-th position of
-    % slider?
-    ribi = [qs0(1);qs0(2)];
-    theta = qs0(3);
+    % i is the inertial reference frame F_a cited in the paper
+    ribi0 = [qs0(1);qs0(2)]; % q_s refers to the slider position
+    theta0 = qs0(3);
     %Kinematic relations
-    Cbi = [cos(theta), sin(theta); -sin(theta), cos(theta)];
-    rbpb = Cbi*ribi+[-obj.a/2;d0];
-    ripb = Cbi'*rbpb;
+    % TODO: Change with the helper class function;
+    Rbi = [cos(theta0), sin(theta0); -sin(theta0), cos(theta0)]; % Rotation matrix from base b to base i
+    ripi0 = ribi0 + Rbi' * [-obj.a / 2; d0];
     %Set state variable and initial condition
-    N = (1/h)*(tf-t0);
+    N = ceil((tf - t0) / h);
     x_state = zeros(N, obj.num_states);
-    x_state(1,:) = [ribi' theta ripb']; 
+    x_state(1,:) = [ribi0' theta0 ripi0']; 
     %Build variables
     t = zeros(N,1);
     u_state = zeros(N, 2); % TODO Just for me: Generalize for when multiple contact points are included
     delta_u_state = zeros(N, 2);
-    % TODO: "repmat" can be used, just that everything is cleaner, not really
-    % that important
     x_star = zeros(N, obj.num_states);
     u_star = zeros(N, obj.num_inputs);  
     for i1=1:N
         disp(t(i1));
         %Define nominal values
         u_star(i1,:) = obj.u_star;
-        x_star(i1,:) = [obj.u_star(1)*t(i1) 0 0 obj.u_star(1)*t(i1)-obj.a/2 0];
+        x_star(i1,:) = [obj.u_star(1) * t(i1) 0 0 obj.u_star(1) * t(i1) - obj.a / 2 0];
         %Object coordinate in inertial frame [xo;yo]
         ribi = [x_state(i1,1);x_state(i1,2)];
         theta = x_state(i1,3);
         %Pusher coordinates in inertial frame [xp;yp]
         ripi = [x_state(i1,4);x_state(i1,5)];
         %Kinematic relations
-        Cbi = [cos(theta), sin(theta); -sin(theta), cos(theta)];
+        Rbi = [cos(theta), sin(theta); -sin(theta), cos(theta)];
         %Control input
-        vipi  = obj.controller(t(i1), x_state(i1,:));%[0.03;0.03];%
-%         if i1 ==1
-%             vipiTemp = vipi;
-%         end
+        vipi  = obj.controller(t(i1), x_state(i1,:));%[0.03;0.03];
         %Transformation of coordinates
-        rbbi = Cbi*ribi;
-        rbpi = Cbi*ripi;
-        vbpi = Cbi*vipi;
+        rbbi = Rbi*ribi;
+        rbpi = Rbi*ripi;
+        vbpi = Rbi*vipi;
         u_state(i1,1:2) = vbpi;
         delta_u_state(i1,1:2) = u_state(i1,1:2) - obj.u_star';
         %Compute derivative (In object frame)
         twist_b = obj.dx_funct(rbbi, rbpi, vbpi);
         vbbi = twist_b(1:2);
         dtheta = twist_b(3);
-        vibi = Cbi'*vbbi;
+        vibi = Rbi'*vbbi;
         dx = [vibi;dtheta;vipi];% + [normrnd(0,.005);normrnd(0,.005);normrnd(0,.005);0;0]; 
         if i1 < N
             t(i1 + 1) = t(i1) + h;
