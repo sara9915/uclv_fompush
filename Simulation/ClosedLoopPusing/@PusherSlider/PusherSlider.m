@@ -21,14 +21,15 @@ classdef PusherSlider < dynamicprops
         num_xvars = 3;
         num_dvars = 1;
         num_inputs = 2;
-        Q_MPC = 10 * diag([1,3,.1,0]);
-        Q_MPC_final = 200 * diag([1,3,.1,0]);
-%         Q_MPC = 10*diag([1,10,10,0]);
-%         Q_MPC_final = 200*diag([.1,10,1,0]);
+        Q_MPC = 10 * diag([1,3,.1,0]); % 10 * diag([1,10,10,0]);
+        Q_MPC_final = 200 * diag([1,3,.1,0]); % 200 * diag([.1,10,1,0]);
         R_MPC = .5 * diag([1,1]);
         R_switch = 0;
     end
-    
+    properties(Access = private)
+        hybrid_states_map;
+        hybrid_modes = HybridMode;
+    end
     properties
        Ani;
        c;
@@ -66,7 +67,6 @@ classdef PusherSlider < dynamicprops
        Opt;
        numDynConstraints;
        numMCConstraints;
-       SimName;
        NumSim;
        FOM;
        MIQP;
@@ -80,7 +80,6 @@ classdef PusherSlider < dynamicprops
        u0index;
        delta_u_prev = [0;0];
        delta_u_delay = [0;0];
-       FilePath;
        modes = [];
        B_Nonlinear;
        f_star;
@@ -92,7 +91,7 @@ classdef PusherSlider < dynamicprops
     
     methods
         %% Constructor
-        function obj = PusherSlider(flag)               
+        function obj = PusherSlider(flag)        
             %Set constant equations
             obj.A = obj.a*obj.b;
             obj.V = obj.A*obj.height;
@@ -117,6 +116,19 @@ classdef PusherSlider < dynamicprops
             else
                 disp('Error: Could not find proper flag string');
             end
+            c2 = obj.c * obj.c;
+            obj.hybrid_states_map = horzcat(StickingState(obj.a, obj.nu_p, c2), ...
+                                        SlidingUpState(obj.a, obj.nu_p, c2), ...
+                                        SlidingDownState(obj.a, obj.nu_p, c2));
+            for i=1:length(obj.hybrid_states_map)
+                obj.hybrid_states_map(i).SymbolicLinearize();
+            end
+            % TODO: Add capability to chose more Modes and even to make it
+            % automatically
+            obj.hybrid_modes(1,3) = HybridMode;
+            obj.hybrid_modes(1,1) = HybridMode(ones(1, obj.steps), obj.num_vars, obj.num_inputs);
+            obj.hybrid_modes(1,2) = HybridMode([2, ones(1, obj.steps - 1)], obj.num_vars, obj.num_inputs);
+            obj.hybrid_modes(1,3) = HybridMode([3, ones(1, obj.steps - 1)], obj.num_vars, obj.num_inputs);
         end
     end
 end
