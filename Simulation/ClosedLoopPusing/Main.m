@@ -1,14 +1,12 @@
-%% Author: Francois Hogan
-%% Date: 12/08/2016
+%% Author: Eudald Romo
+%% Date: 12/22/2016
 
 %% Clear
-clear all;
+clear variables; % Clear all is bad for performance
 close all;
 clc;
-%Initialize Drake
-run('../../software/externals/drake/addpath_drake');
-%%Add System path
-addpath(fullfile('../System'));
+% Setup
+run('Setup.m');
 
 %% Simulation Parameters
 t0 = 0;
@@ -20,10 +18,12 @@ tic;
 p = PusherSlider('Trajectory');%'Target'
 
 %% Save data in new folder
-p.SimName = 'SimulationResultsTest'; %Maybe add date, or even date and time, so its not overwritten
-mkdir(pwd,p.SimName);
-p.FilePath = strcat(pwd,'/',p.SimName);
-FileName = strcat(p.FilePath,'/',p.SimName);
+SimName = 'SimulationResultsTest'; %Maybe add date, or even date and time, so its not overwritten
+if  exist(SimName, 'dir') ~= 7
+    mkdir(pwd, SimName);
+end
+FilePath = strcat(pwd, '/', SimName);
+file_name = strcat(FilePath, '/', SimName);
 
 %% Linearize and build constraint matrices
 p.symbolicLinearize();
@@ -35,26 +35,23 @@ p.ConstraintMatrices('FOM');
 p.NumSim = 1;
 
 %% Simulate Forward
-%Initial condition for 5 different simulations 
-%Define d0
-vecD0{1} = 0;
-% vecD0{2} =  0.01;
-% vecD0{3} = -0.03;
-% vecD0{4} =  0.01;
-% vecD0{5} =  0.00;
-%Define qs0
-vecQS0{1} = [0;0.05;30*pi/180];
-% vecQS0{2} = [-0.02;   .05; 20*pi/180];
-% vecQS0{3} = [0.00;    0  ; 15*pi/180];
-% vecQS0{4} = [-0.06; -.05  ; -30*pi/180];
-% vecQS0{5} = [0.00;   -0.1 ; -130*pi/180];
+%Initial conditions
+vecD0 = [0, ...
+        ... .01, -.03, ...
+        ... .01, .00 ...
+        ];
+vecQS0 = [0, .05, 30 * pi / 180; ...
+            ... -.02, .05, 20 * pi / 180; 0, 0, 15 * pi / 180; ...
+            ... -.06, -.05, -30 * pi / 180; 0, -.1, -130 * pi / 180 ...
+            ];
 
 for lv1=1:p.NumSim
-    p.EulerIntegration( t0, tf, h_step, vecD0{lv1}, vecQS0{lv1}, lv1);
+    p.EulerIntegration(t0, tf, h_step, vecD0(lv1), vecQS0(lv1,:).', lv1);
 end
-
-p.Animate(1);
+% p.Animate(file_name, 1);
+animator = Animator;
+animator.Animate(p, file_name, 1)
 toc
 %% Post-Processing
-save(FileName, 'p');
+save(file_name, 'p');
 
