@@ -25,68 +25,69 @@ classdef PusherSlider < dynamicprops
         Q_MPC_final = 200 * diag([1,3,.1,0]); % 200 * diag([.1,10,1,0]);
         R_MPC = .5 * diag([1,1]);
         R_switch = 0;
+        % Declare Equilibrium variables
+        u_star = [0.05;0]; % TODO: Change to allow complex trajectories
+        ry_star= [0];
+        x_eq= [0;0;0];
     end
     properties(Access = private)
         hybrid_states_map;
         hybrid_modes = HybridMode;
     end
     properties
-       Ani;
-       c;
-       m;
-       t;
-       V; 
-       A; 
-       m_max;
-       f_max;
-       c_pert;
-       m_pert;
-       m_max_pert;
-       f_max_pert;
-       nu_pert;
-       nu_p_pert;
-       x_state;
-       u_state;
-       delta_u_state;
-       vipi_state;
-       Figures;
-       FiguresMPC;
-       x_eq;
-       x_star;
-       ry_star;
-       gammaTop_star;
-       gammaBottom_star;
-       u_star;
-       K;
-       A_linear;
-       B_linear;
-       C_top_linear;
-       C_bottom_linear;
-       A_bar;
-       B_bar;
-       Opt;
-       numDynConstraints;
-       numMCConstraints;
-       NumSim;
-       FOM;
-       MIQP;
-       binInitial;
-       AinInitial;
-       beqInitial;
-       AeqInitial;
-       Cost;
-       StateCost;
-       x0index;
-       u0index;
-       delta_u_prev = [0;0];
-       delta_u_delay = [0;0];
-       modes = [];
-       B_Nonlinear;
-       f_star;
-       CostVector;
-       starIndex;
-       ControllerType;
-       flag = 0;
+        Ani;
+        c;
+        m;
+        t;
+        V; 
+        A; 
+        m_max;
+        f_max;
+        c_pert;
+        m_pert;
+        m_max_pert;
+        f_max_pert;
+        nu_pert;
+        nu_p_pert;
+        x_state;
+        u_state;
+        delta_u_state;
+        vipi_state;
+        Figures;
+        FiguresMPC;
+        x_star;
+        gammaTop_star;
+        gammaBottom_star;
+        K;
+        A_linear;
+        B_linear;
+        C_top_linear;
+        C_bottom_linear;
+        A_bar;
+        B_bar;
+        Opt;
+        numDynConstraints;
+        numMCConstraints;
+        NumSim;
+        FOM;
+        MIQP;
+        binInitial;
+        AinInitial;
+        beqInitial;
+        AeqInitial;
+        Cost;
+        StateCost;
+        x0index;
+        u0index;
+        delta_u_prev = [0;0];
+        delta_u_delay = [0;0];
+        modes = [];
+        B_Nonlinear;
+        f_star;
+        CostVector;
+        starIndex;
+        ControllerType;
+        flag = 0;
     end
     
     methods
@@ -120,15 +121,12 @@ classdef PusherSlider < dynamicprops
             obj.hybrid_states_map = horzcat(StickingState(obj.a, obj.nu_p, c2), ...
                                         SlidingUpState(obj.a, obj.nu_p, c2), ...
                                         SlidingDownState(obj.a, obj.nu_p, c2));
-            for i=1:length(obj.hybrid_states_map)
-                obj.hybrid_states_map(i).SymbolicLinearize();
-            end
             % TODO: Add capability to chose more Modes and even to make it
             % automatically
-            obj.hybrid_modes(1,3) = HybridMode;
-            obj.hybrid_modes(1,1) = HybridMode(ones(1, obj.steps), obj.num_vars, obj.num_inputs);
-            obj.hybrid_modes(1,2) = HybridMode([2, ones(1, obj.steps - 1)], obj.num_vars, obj.num_inputs);
-            obj.hybrid_modes(1,3) = HybridMode([3, ones(1, obj.steps - 1)], obj.num_vars, obj.num_inputs);
+%             obj.hybrid_modes(1,3) = HybridMode;
+%             obj.hybrid_modes(1,1) = HybridMode(ones(1, obj.steps), obj.num_vars, obj.num_inputs);
+%             obj.hybrid_modes(1,2) = HybridMode([2, ones(1, obj.steps - 1)], obj.num_vars, obj.num_inputs);
+%             obj.hybrid_modes(1,3) = HybridMode([3, ones(1, obj.steps - 1)], obj.num_vars, obj.num_inputs);
         end
     end
 end
