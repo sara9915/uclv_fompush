@@ -6,15 +6,10 @@ function obj = symbolicLinearize(obj)
     %Build states                        
     x_state = [x;y;theta;ry];
     u_state = [u1;u2];
-    % Declare Equilibrium variables
-    obj.u_star= [0.05;0];
-    obj.ry_star= [0];
-    obj.x_eq= [0;0;0];
     %Kinematics
     Cbi = Helper.C3_2d(theta);
     rx = -obj.a/2;
     rbpb = [rx;ry];
-    
     %% Stick: vo = vp, Slide Up: vo = vo_up, Slide Down: vo = vo_down
     %Define gamma=vt/vn
     gamma_top    = (obj.nu_p*obj.c^2 - rx*ry + obj.nu_p*rx^2)/(obj.c^2 + ry^2 - obj.nu_p*rx*ry);
@@ -29,7 +24,6 @@ function obj = symbolicLinearize(obj)
     obj.C_bottom_linear = double(C_bottom);
     obj.gammaTop_star    =    double(subs(gamma_top, ry, obj.ry_star));
     obj.gammaBottom_star = double(subs(gamma_bottom, ry, obj.ry_star));
-    
     %Determine effective pusher velocity equation
     for lv1=1:3
         if lv1 == 1;%Sticking
@@ -59,7 +53,6 @@ function obj = symbolicLinearize(obj)
         dry{lv1}   = simplify(drbpb{lv1}(2))  ;%[u1;u2] - vo;%
         %Build nonlinear function
         f{lv1} = [dribi{lv1};dtheta{lv1};dry{lv1}];
-
         %Build jacobians
         A{lv1} = jacobian(f{lv1},x_state);
         B{lv1} = jacobian(f{lv1},u_state);
