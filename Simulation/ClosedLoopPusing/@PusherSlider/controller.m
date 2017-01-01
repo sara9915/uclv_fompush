@@ -4,16 +4,12 @@ function vipi = controller(obj, t, x_state)
     theta = x_state(3);
     ripi = [x_state(4);x_state(5)]; % [xp;yp]
     %Kinematics
-    % TODO: This is the preferred way of dealing with matrix
-    % initialization, it should be through function calls whenever they are
-    % reused
     Cbi = Helper.C3_2d(theta);
     ripb = ripi-ribi;
     rbpb = Cbi*ripb;
     d = rbpb(2); % TODO: Never used
     %Compute error vector
     delta_x = obj.errorVector(t, x_state);%[obj.u_star(1)*t; 0; 0];
-       
     % MPC Control 
     if obj.FOM
         options = optimoptions('quadprog','Display','none'); %TODO: Never used
@@ -75,7 +71,6 @@ function vipi = controller(obj, t, x_state)
         end
 %         obj.delta_u_prev = delta_u;
 %         obj.delta_u_delay = Helper.smooth(obj, delta_u, 0.2, obj.delta_u_delay);
-        
 %         for lv2=1:obj.NumFam
 %             obj.PlotMPC(out_delta_u{lv2},out_delta_x{lv2});
 %         end
@@ -85,7 +80,6 @@ function vipi = controller(obj, t, x_state)
         Ain1 = zeros(obj.num_vars, obj.Opt.MIQP.nv); % TODO: Not used
         %Build Initial condition b matrix
 %         binTemp = [obj.A_bar{1}*delta_x; -obj.A_bar{1}*delta_x;obj.A_bar{2}*delta_x; -obj.A_bar{2}*delta_x;obj.A_bar{3}*delta_x; -obj.A_bar{3}*delta_x];
-        binTemp = [];
         binTemp = [obj.A_bar{1}*delta_x; -obj.A_bar{1}*delta_x;obj.A_bar{2}*delta_x; -obj.A_bar{2}*delta_x;obj.A_bar{3}*delta_x; -obj.A_bar{3}*delta_x];
         bin = obj.binInitial + [binTemp; zeros(length(obj.binInitial)-length(binTemp),1)];
         obj.Opt.MIQP.b = bin;  
@@ -95,14 +89,12 @@ function vipi = controller(obj, t, x_state)
         out = obj.Opt.MIQP.vars.u.value(1:2)';
         obj.Opt.MIQP.vars.region.value;
         delta_u = out(1:2);
-        
-        out_delta_x = obj.Opt.MIQP.vars.x.value'; % TODO: Not used
-        out_delta_u = obj.Opt.MIQP.vars.u.value'; % TODO: Not used
-        
+%         out_delta_x = obj.Opt.MIQP.vars.x.value'; % Used to plot
+%         out_delta_u = obj.Opt.MIQP.vars.u.value'; % Used to plot
 %         obj.PlotMPC(out_delta_u,out_delta_x);
 %         return
     end
-    %Control u to applied velocity (world frame)
+    % Control u to applied velocity (world frame)
     Cbi = Helper.C3_2d(theta);
 %     vbpi = (obj.delta_u_delay + obj.u_star);
     vbpi = (delta_u + obj.u_star);
