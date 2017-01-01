@@ -1,4 +1,5 @@
 addpath('../../software/externals/jsonlab');
+run('../../software/externals/drake/addpath_drake');
 addpath(fullfile('../System'));
 if isunix()
     addpath(strcat(getenv('GUROBI_HOME'),'/matlab'));
