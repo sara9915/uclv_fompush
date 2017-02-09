@@ -33,6 +33,7 @@
 Simulation/ClosedLoopPushing/img
 Simulation/ClosedLoopPushing/vid
 Simulation/ClosedLoopPushing/Results
+Simulation/ClosedLoopPushing/SimulationResults
 
 # Catkin ignore
 catkin_ws/build
