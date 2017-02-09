@@ -9,8 +9,12 @@ function obj = ConstraintMatricesFOM(obj)
         end
         %Define optimization program
         FOM{Family} = MixedIntegerConvexProgram(false);
-        FOM{Family} = FOM{Family}.addVariable('u', 'C', [obj.num_inputs, obj.steps], -100*ones(obj.num_inputs,obj.steps), 100*ones(obj.num_inputs,obj.steps));
-        FOM{Family} = FOM{Family}.addVariable('x', 'C', [obj.num_vars, obj.steps], -100*ones(obj.num_vars,obj.steps), 100*ones(obj.num_vars,obj.steps));
+        u_lower_bound = [(-obj.u_star(1) + 0.01) * ones(1, obj.steps); (-obj.u_star(2) - 0.1) * ones(1, obj.steps)]; % TODO: Change for complex trajectories and include as member of something
+        u_upper_bound = [(-obj.u_star(1) + 0.1) * ones(1, obj.steps); (-obj.u_star(2) + 0.1) * ones(1, obj.steps)]; % TODO: Change for complex trajectories and include as member of something
+        x_lower_bound = [-100 * ones(3, obj.steps); -.75 * obj.a / 2 * ones(1, obj.steps)];
+        x_upper_bound = [100 * ones(3, obj.steps); .75 * obj.a / 2 * ones(1, obj.steps)];
+        FOM{Family} = FOM{Family}.addVariable('u', 'C', [obj.num_inputs, obj.steps], u_lower_bound, u_upper_bound);
+        FOM{Family} = FOM{Family}.addVariable('x', 'C', [obj.num_vars, obj.steps], x_lower_bound, x_upper_bound);
         
         %Loop through steps of opt. program
         % TODO: Change name so it's not misleading anymore
@@ -53,45 +57,15 @@ function obj = ConstraintMatricesFOM(obj)
             FOM{Family} = FOM{Family}.addCost(H, [], []); 
             
             %% Dynamic Constraints
-            Ain1 = zeros(obj.num_vars, FOM{Family}.nv);
+            Ain = zeros(obj.num_vars, FOM{Family}.nv);
             if lv1 ==1
-                %TODO: This seems off. Why nothing happens at initial step?
-%                  Ain1(:,FOM{Family}.vars.x.i(1:obj.num_vars,lv1))   = zeros(obj.num_vars);
-%                  bin1 = zeros(obj.num_vars,1);
-%                  Ain2 = -Ain1;
-%                  bin2 = bin1;
-%                  FOM{Family} = FOM{Family}.addLinearConstraints(Ain1, bin1, [], []);
-%                  FOM{Family} = FOM{Family}.addLinearConstraints(Ain2, bin2, [], []);
-%                  clear Ain1 Ain2 bin1 bin2
             else
-                Ain1(:,FOM{Family}.vars.x.i(1:obj.num_vars,lv1-1))= -obj.A_bar{counter};
-                Ain1(:,FOM{Family}.vars.x.i(1:obj.num_vars,lv1))  = eye(obj.num_vars);
-                Ain1(:,FOM{Family}.vars.u.i(1:obj.num_inputs,lv1))=  -obj.B_bar{counter};
-                bin1 = ones(obj.num_vars,1)*M*(1-z(counter));
-                Ain2 = -Ain1;
-                bin2 = bin1;
-                FOM{Family} = FOM{Family}.addLinearConstraints(Ain1, bin1, [], []);
-                FOM{Family} = FOM{Family}.addLinearConstraints(Ain2, bin2, [], []);
-                clear Ain1 Ain2 bin1 bin2
-            end
-
-            % TODO: Why not group it with the other if?
-            if lv1==1
-%                if counter==1
-%                    Ain = zeros(2, FOM{Family}.nv);
-%                    bin = [0;0];
-%                    FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);  
-%                elseif counter==2
-%                    Ain = zeros(2, FOM{Family}.nv);
-%                    bin=[0;0];
-%                    FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);   
-%                else
-%                    Ain = zeros(2, FOM{Family}.nv);
-%                    bin=[0;0];
-%                    FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);   
-%                end
-%                clear Ain bin
-            else
+                Ain(:,FOM{Family}.vars.x.i(1:obj.num_vars,lv1-1))= -obj.A_bar{counter};
+                Ain(:,FOM{Family}.vars.x.i(1:obj.num_vars,lv1))  = eye(obj.num_vars);
+                Ain(:,FOM{Family}.vars.u.i(1:obj.num_inputs,lv1))=  -obj.B_bar{counter};
+                bin = ones(obj.num_vars,1)*M*(1-z(counter));
+                FOM{Family} = FOM{Family}.addLinearConstraints([], [], Ain, bin);
+                clear Ain bin
                 %% Motion Cone Constraint 
                 epsilon = 0.005;
                 NconstMC = 1; % TODO: Seems off, it's used in other ifs without initialization, so I moved out of the if/else
@@ -126,34 +100,6 @@ function obj = ConstraintMatricesFOM(obj)
                 FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);
                 clear D E Ain bin
             end
-            %% Vn min
-            Ain = zeros(1, FOM{Family}.nv);
-            Ain(:,FOM{Family}.vars.u.i(1,lv1)) = -1;
-            bin = obj.u_star(1)-0.01;
-            %Target:-0.03
-            %Traj:-0.01
-            FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);  
-            clear Ain bin 
-            %% Vn max
-            Ain = zeros(1, FOM{Family}.nv);
-            Ain(:,FOM{Family}.vars.u.i(1,lv1)) = 1;
-            bin = -obj.u_star(1)+0.1;
-            FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);  
-            clear Ain bin
-            %% Vt min
-            Ain = zeros(1, FOM{Family}.nv);
-            Ain(:,FOM{Family}.vars.u.i(2,lv1)) = -1;
-%             bin = obj.u_star(2)+0.1;
-            bin = obj.u_star(2)+0.1;
-            FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);  
-            clear Ain bin
-            %% Vt max
-            Ain = zeros(1, FOM{Family}.nv);
-            Ain(:,FOM{Family}.vars.u.i(2,lv1)) = 1;
-%             bin = -obj.u_star(2)+0.1;
-            bin = -obj.u_star(2)+0.1;
-            FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);  
-            clear Ain bin
 %             %% Delta un max
 %             if lv1==1
 %                 Ain = zeros(1, FOM{Family}.nv);
@@ -230,20 +176,6 @@ function obj = ConstraintMatricesFOM(obj)
 %                 FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);  
 %                 clear Ain bin
 %             end
-            %% Max py distance
-            Ain = zeros(1, FOM{Family}.nv);
-            Ain(:,FOM{Family}.vars.x.i(4,lv1)) = 1;
-            bin = .75*obj.a/2;
-            FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);  
-            clear Ain bin
-            %% Min py distance
-            Ain = zeros(1, FOM{Family}.nv);
-            Ain(:,FOM{Family}.vars.x.i(4,lv1)) = -1;
-            bin = .75*obj.a/2;
-            FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);  
-            clear Ain bin
-            % TODO: Cannot all the constraints be added at the same time at
-            % the end?
         end
         %% 
         %Define struct to store initial value for bin (before IC added

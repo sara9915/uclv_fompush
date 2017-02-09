@@ -1,7 +1,5 @@
 function [] = Animate(obj, pusher_slider, file_name, flag)
 % Function to animate the pusher_slider simulation motion
-
-
 animation = figure('Color', 'w', 'OuterPosition', [0, 0, 960, 1080], ...
 'PaperPosition', [0, 0, 11, (6/8)*11]);
 
@@ -81,9 +79,7 @@ else
             end
          end
     end
-    scatter(0.23,-0.11,100,'b','^','filled')
-    scatter(0.23, 0.11,100,'b','^','filled')
-    h = scatter(0.03, 0.08,100,'b','^','filled');
+    h = scatter([0.23 0.23 0.03], [-0.11 .11 0.08],100,'b','^','filled');
     legend(h,'Target');
 %   title('Simulated Trajectory');
     saveas(animation, file_name, 'epsc');

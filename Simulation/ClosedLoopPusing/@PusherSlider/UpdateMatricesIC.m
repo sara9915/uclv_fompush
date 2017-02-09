@@ -13,14 +13,7 @@ function obj = UpdateMatricesIC(obj,counter,delta_x,Family)
     Aeq(:,obj.Opt.FOM{Family}.vars.x.i(1:obj.num_vars,1))   = eye(obj.num_vars);
     Aeq(:,obj.Opt.FOM{Family}.vars.u.i(1:obj.num_inputs,1)) = -B_tilde;
     beq = F_tilde;
-    Ain1 = Aeq;
-    bin1 = beq;
-    Ain2 = -Aeq;
-    bin2 = -beq;
-    Ain = [Ain1;Ain2];
-    bin = [bin1;bin2];
-    obj.Opt.FOM{Family} = obj.Opt.FOM{Family}.addLinearConstraints(Ain, bin, [], []);
-%     obj.Opt.FOM{Family} = obj.Opt.FOM{Family}.addLinearConstraints(Ain2, bin2, [], []);
+    obj.Opt.FOM{Family} = obj.Opt.FOM{Family}.addLinearConstraints([], [], Aeq, beq);
     clear Aeq beq
     %% Add nonlinear motion cone constraint
     epsilon = 0.005;
@@ -31,43 +24,29 @@ function obj = UpdateMatricesIC(obj,counter,delta_x,Family)
             bin = -obj.u_star(2) + gamma_top*obj.u_star(1);
             Ain = zeros(NconstMC, obj.Opt.FOM{Family}.nv);
             Ain(:,obj.Opt.FOM{Family}.vars.u.i(1:2,1)) = D;
-%             obj.Opt.FOM{Family}.A(9,:) = Ain;
-%             obj.Opt.FOM{Family}.b(9,1) =  bin;
             obj.Opt.FOM{Family} = obj.Opt.FOM{Family}.addLinearConstraints(Ain, bin, [], []);   
             clear D E Ain bin
             D = [gamma_bottom -1];
             bin = obj.u_star(2) - gamma_bottom*obj.u_star(1);
             Ain = zeros(NconstMC, obj.Opt.FOM{Family}.nv);
             Ain(:,obj.Opt.FOM{Family}.vars.u.i(1:2,1)) = D;
-%             obj.Opt.FOM{Family}.A(10,:) = Ain;
-%             obj.Opt.FOM{Family}.b(10,1) =  bin;
             obj.Opt.FOM{Family} = obj.Opt.FOM{Family}.addLinearConstraints(Ain, bin, [], []); 
             clear D E Ain bin
-        elseif counter==2
+    elseif counter==2
             %Sliding up MC (1 constraint)
             D = [gamma_top -1];
             bin = obj.u_star(2) - gamma_top*obj.u_star(1)-epsilon;
             Ain = zeros(NconstMC, obj.Opt.FOM{Family}.nv);
             Ain(:,obj.Opt.FOM{Family}.vars.u.i(1:2,1)) = D;
-%             obj.Opt.FOM{Family}.A(9,:) = Ain;
-%             obj.Opt.FOM{Family}.b(9,1) =  bin;
-%             obj.Opt.FOM{Family}.A(10,:) = Ain*0;
-%             obj.Opt.FOM{Family}.b(10,1) =  0;
             obj.Opt.FOM{Family} = obj.Opt.FOM{Family}.addLinearConstraints(Ain, bin, [], []);   
             clear D E Ain bin
-        else
+    else
             %Sliding down MC (1 constraint)
             D = [-gamma_bottom 1];
             bin = -obj.u_star(2) + gamma_bottom*obj.u_star(1)-epsilon;
             Ain = zeros(NconstMC, obj.Opt.FOM{Family}.nv);
             Ain(:,obj.Opt.FOM{Family}.vars.u.i(1:2,1)) = D;
-%             obj.Opt.FOM{Family}.A(9,:) = Ain;
-%             obj.Opt.FOM{Family}.b(9,1) =  bin;
-%             obj.Opt.FOM{Family}.A(10,:) = Ain*0;
-%             obj.Opt.FOM{Family}.b(10,1) =  0;
             obj.Opt.FOM{Family} = obj.Opt.FOM{Family}.addLinearConstraints(Ain, bin, [], []);   
             clear D E Ain bin
     end
-%     obj.Opt.FOM{Family}.A
-%     obj.Opt.FOM{Family}.b
 end

@@ -6,11 +6,11 @@ function delta_x = errorVector(obj, t, x_state)
     xp = x_state(4);
     yp = x_state(5);
     %Kinematics
-    Cbi = Helper.C3_2d(theta);
+    Rbi = Helper.C3_2d(theta);
     ripi = [xp;yp];
     ribi = [x;y];
     ripb = ripi-ribi;
-    rbpb = Cbi*ripb;
+    rbpb = Rbi * ripb;
     d = rbpb(2);
     %Compute x_star
     if strcmp(obj.ControllerType,'Trajectory')
@@ -41,7 +41,7 @@ function delta_x = errorVector(obj, t, x_state)
         %%
         
         ritb = riti - ribi;
-        rbtb = Cbi*ritb;
+        rbtb = Rbi*ritb;
         theta_rel = -imag(log(rbtb(1) + i*rbtb(2)))
         theta_g = theta - theta_rel;
         Cci = Helper.C3_2d(theta_g);

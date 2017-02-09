@@ -3,10 +3,22 @@ classdef PusherSlider < dynamicprops
         %Pusher constants
         a = 0.09;
         b = 0.09;
+        A = PusherSlider.a * PusherSlider.b;
+        V = PusherSlider.A * PusherSlider.height;
         nu = 0.35;
         nu_p = 0.3;
         rho = 10000;
+        m = PusherSlider.rho * PusherSlider.V;
         height = 0.013;
+        f_max = (PusherSlider.nu * PusherSlider.m * Helper.g);
+        m_max = PusherSlider.m_max_funct(PusherSlider.nu, PusherSlider.m);
+        c = PusherSlider.m_max / PusherSlider.f_max; 
+        m_pert = PusherSlider.m * 1.0; 
+        nu_pert = PusherSlider.nu * 1.0; 
+        nu_p_pert = PusherSlider.nu_p * 1.0; 
+        f_max_pert = (PusherSlider.nu_pert * PusherSlider.m_pert * Helper.g);
+        m_max_pert = PusherSlider.m_max_funct(PusherSlider.nu_pert, PusherSlider.m_pert);
+        c_pert = PusherSlider.m_max_pert / PusherSlider.f_max_pert;
         %LQR variables
         Q_LQR = diag([1,1,.1]);
         R_LQR = .1 * eye(2);
@@ -14,7 +26,9 @@ classdef PusherSlider < dynamicprops
         num_states = 5;
         %Optimization Program
         h_opt = 0.03;
-        steps = 35; 
+        h_step = 0.01;  
+%         steps = 2; 
+        steps = 35;
         NumFam = 3;
         num_int = 1;
         num_vars = 4;
@@ -26,29 +40,25 @@ classdef PusherSlider < dynamicprops
         R_MPC = .5 * diag([1,1]);
         R_switch = 0;
         % Declare Equilibrium variables
-        u_star = [0.05;0]; % TODO: Change to allow complex trajectories
+        u_star = [0.05;0];
         ry_star= [0];
         x_eq= [0;0;0];
+        u_lower_bound = [-0.01; 0.1];
+        u_upper_bound = [0.1; 0.1];
+        x_lower_bound = [100; 100; 100; 100];
+        x_upper_bound = [100; 100; 100; 100];
     end
-    properties(Access = private)
+    properties
+%     properties(Access = private) % TODO: Undo
         hybrid_states_map;
-        hybrid_modes = HybridMode;
+        hybrid_modes;
+        real_states_map;
+        fom_solver;
+        euler_integrator;
     end
     properties
         Ani;
-        c;
-        m;
-        t;
-        V; 
-        A; 
-        m_max;
-        f_max;
-        c_pert;
-        m_pert;
-        m_max_pert;
-        f_max_pert;
-        nu_pert;
-        nu_p_pert;
+        t; 
         x_state;
         u_state;
         delta_u_state;
@@ -89,25 +99,9 @@ classdef PusherSlider < dynamicprops
         ControllerType;
         flag = 0;
     end
-    
     methods
         %% Constructor
-        function obj = PusherSlider(flag)        
-            %Set constant equations
-            obj.A = obj.a*obj.b;
-            obj.V = obj.A*obj.height;
-            obj.m = obj.rho*obj.V;
-            %Compute f_max and m_max
-            obj.f_max = (obj.nu*obj.m*Helper.g);
-            obj.m_max = obj.m_max_funct(obj.nu, obj.m);
-            obj.c = obj.m_max/obj.f_max; 
-            %Compute perturbed states
-            obj.m_pert = obj.m*1.0; 
-            obj.nu_pert = obj.nu*1.0; 
-            obj.nu_p_pert = obj.nu_p*1.0; 
-            obj.f_max_pert = (obj.nu_pert*obj.m_pert*Helper.g);
-            obj.m_max_pert = obj.m_max_funct(obj.nu_pert, obj.m_pert);
-            obj.c_pert = obj.m_max_pert/obj.f_max_pert; 
+        function obj = PusherSlider(flag)     
             %Set proper controller type
             obj.ControllerType = flag;
             if strcmp(flag,'Trajectory')
@@ -117,16 +111,25 @@ classdef PusherSlider < dynamicprops
             else
                 disp('Error: Could not find proper flag string');
             end
-            c2 = obj.c * obj.c;
-            obj.hybrid_states_map = horzcat(StickingState(obj.a, obj.nu_p, c2), ...
-                                        SlidingUpState(obj.a, obj.nu_p, c2), ...
-                                        SlidingDownState(obj.a, obj.nu_p, c2));
+            c2 = PusherSlider.c^2;
+            obj.hybrid_states_map = horzcat(PusherSliderStates.QSSticking(PusherSlider.a, PusherSlider.nu_p, c2), ...
+                                            PusherSliderStates.QSSlidingUp(PusherSlider.a, PusherSlider.nu_p, c2), ...
+                                            PusherSliderStates.QSSlidingDown(PusherSlider.a, PusherSlider.nu_p, c2));
+            c2_pert = PusherSlider.c_pert^2;
+            obj.real_states_map = horzcat(PusherSliderStates.QSSticking(PusherSlider.a, PusherSlider.nu_p_pert, c2_pert), ...
+                                          PusherSliderStates.QSSlidingUp(PusherSlider.a, PusherSlider.nu_p_pert, c2_pert), ...
+                                          PusherSliderStates.QSSlidingDown(PusherSlider.a, PusherSlider.nu_p_pert, c2_pert));
             % TODO: Add capability to chose more Modes and even to make it
             % automatically
-%             obj.hybrid_modes(1,3) = HybridMode;
-%             obj.hybrid_modes(1,1) = HybridMode(ones(1, obj.steps), obj.num_vars, obj.num_inputs);
-%             obj.hybrid_modes(1,2) = HybridMode([2, ones(1, obj.steps - 1)], obj.num_vars, obj.num_inputs);
-%             obj.hybrid_modes(1,3) = HybridMode([3, ones(1, obj.steps - 1)], obj.num_vars, obj.num_inputs);
+            obj.hybrid_modes = [ones(1, obj.steps); 2, ones(1, obj.steps - 1); 3, ones(1, obj.steps - 1)];
+            obj.fom_solver= MPCSolvers.FOMSolver(obj.hybrid_states_map, obj.Q_MPC, obj.Q_MPC_final, obj.R_MPC, obj.u_lower_bound, obj.u_upper_bound, obj.x_lower_bound, obj.x_upper_bound, obj.h_opt, obj.hybrid_modes);
+            obj.euler_integrator = EulerIntegration(obj.real_states_map, obj.h_step);
         end
+    end
+    methods (Static, Access = private)
+        function n_f = m_max_funct(nu, m)     
+            n_f_integrand = @(p1, p2) (nu * m * Helper.g / PusherSlider.A) * sqrt([p1; p2; 0]' * [p1; p2; 0]);
+            n_f = Helper.DoubleGaussQuad(n_f_integrand, -PusherSlider.a / 2, PusherSlider.a / 2, -PusherSlider.b / 2, PusherSlider.b / 2);
+        end     
     end
 end

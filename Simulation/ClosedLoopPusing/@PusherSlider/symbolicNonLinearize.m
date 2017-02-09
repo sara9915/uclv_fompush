@@ -6,10 +6,6 @@ function obj = symbolicNonLinearize(obj)
     %Build states                        
     x_state = [x;y;theta;ry];
     u_state = [u1;u2];
-    % Declare Equilibrium variables
-    obj.u_star= [0.05;0];
-    obj.ry_star= [0];
-    obj.x_eq= [0;0;0];
     %Kinematics
     Cbi = Helper.C3_2d(theta);
     rx = -obj.a/2;

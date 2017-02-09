@@ -4,8 +4,8 @@ function vo = MotionCone(obj,rbbi, rbpi, vbpi)
     rx = -obj.a/2;
     ry = rbpb(2);
     %Compute friction cone vectors
-    gamma_top    = (obj.nu_p_pert*obj.c_pert^2 - rx*ry + obj.nu_p_pert*rx^2)/(obj.c_pert^2 + ry^2 - obj.nu_p_pert*rx*ry);
-    gamma_bottom = (-obj.nu_p_pert*obj.c_pert^2 - rx*ry - obj.nu_p_pert*rx^2)/(obj.c_pert^2 + ry^2 + obj.nu_p_pert*rx*ry);
+    gamma_top    = (obj.nu_p_pert*obj.c_pert^2 - rx * ry + obj.nu_p_pert * rx^2) / (obj.c_pert^2 + ry^2 - obj.nu_p_pert * rx * ry);
+    gamma_bottom = (-obj.nu_p_pert*obj.c_pert^2 - rx * ry - obj.nu_p_pert * rx^2) / (obj.c_pert^2 + ry^2 + obj.nu_p_pert * rx * ry);
     try
         gamma = vbpi(2)/vbpi(1);
     catch
@@ -30,9 +30,9 @@ function vo = MotionCone(obj,rbbi, rbpi, vbpi)
         vo = vbpi;
         disp('Sticking');
     end
-
     if vo(1)<=0 %|| abs(ry)>obj.b/2
-        vo=[0;0];
-         disp('not in contact');
+        error('Not in contact');
+%         vo=[0;0];
+%          disp('not in contact');
     end
 end

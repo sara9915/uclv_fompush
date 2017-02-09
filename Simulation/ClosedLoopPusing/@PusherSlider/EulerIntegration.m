@@ -6,7 +6,7 @@ function obj = EulerIntegration(obj, t0, tf, h, d0, qs0, SimulationCounter)
     theta0 = qs0(3);
     %Kinematic relations
     % TODO: Change with the helper class function;
-    Rbi0 = C3_2d(theta0); % Rotation matrix from base b to base i
+    Rbi0 = Helper.C3_2d(theta0); % Rotation matrix from base b to base i
     ripi0 = ribi0 + Rbi0' * [-obj.a / 2; d0]; % Pusher coordinates in inertial frame [xp;yp]
     %Set state variable and initial condition
     number_of_steps = ceil((tf - t0) / h);
@@ -26,7 +26,7 @@ function obj = EulerIntegration(obj, t0, tf, h, d0, qs0, SimulationCounter)
         u_star(step,:) = obj.u_star;
         x_star(step,:) = [obj.u_star(1) * t(step) 0 0 obj.u_star(1) * t(step) - obj.a / 2 0];
         %Kinematic relations
-        Rbi = C3_2d(x_state(step,3)); %C3_2d(theta)
+        Rbi = Helper.C3_2d(x_state(step,3)); %C3_2d(theta)
         %Control input
         vipi = obj.controller(t(step), x_state(step, :)); %[0.03;0.03];
         %Transformation of coordinates
@@ -34,7 +34,9 @@ function obj = EulerIntegration(obj, t0, tf, h, d0, qs0, SimulationCounter)
         rbpi = Rbi * [x_state(step, 4); x_state(step, 5)]; % Rbi * ripi
         vbpi = Rbi * vipi;
         u_state(step,1:2) = vbpi;
+%         u_state(step,1:2)
         delta_u_state(step,1:2) = u_state(step,1:2) - obj.u_star';
+%         delta_u_state(step,1:2)
         %Compute derivative (In object frame)
         twist_b = obj.dx_funct(rbbi, rbpi, vbpi);
         vbbi = twist_b(1:2);

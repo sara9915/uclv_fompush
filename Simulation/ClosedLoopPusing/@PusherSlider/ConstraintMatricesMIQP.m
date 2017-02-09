@@ -9,8 +9,8 @@ function obj = ConstraintMatricesMIQP(obj)
     end
     %Define optimization program
     MIQP = MixedIntegerConvexProgram(false);
-    MIQP = MIQP.addVariable('u', 'C', [obj.num_inputs, obj.steps], -100*ones(obj.num_inputs,obj.steps), 100*ones(obj.num_inputs,obj.steps));
-    MIQP = MIQP.addVariable('x', 'C', [obj.num_vars, obj.steps], -100*ones(obj.num_vars,obj.steps), 100*ones(obj.num_vars,obj.steps));
+    MIQP = MIQP.addVariable('u', 'C', [obj.num_inputs, obj.steps], -100 * ones(obj.num_inputs,obj.steps), 100 * ones(obj.num_inputs,obj.steps));
+    MIQP = MIQP.addVariable('x', 'C', [obj.num_vars, obj.steps], -100 * ones(obj.num_vars,obj.steps), 100 * ones(obj.num_vars,obj.steps));
     MIQP = MIQP.addVariable('region', 'B', [3, obj.num_int], 0, 1);
     
     %Define default mode
@@ -179,7 +179,7 @@ function obj = ConstraintMatricesMIQP(obj)
                 clear D E Ain bin
             end
         end
-                 %% Define mode-independant constraints
+        %% Define mode-independant constraints
         %Vn min
         Ain = zeros(1, MIQP.nv);
         Ain(:,MIQP.vars.u.i(1,lv1)) = -1;
