@@ -29,12 +29,12 @@ setup_cpush()
   export PATH=$PATH:$HOME/software/libbot/build/bin  # for lcm and libbot install
   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
   export LD_LIBRARY_PATH=$CPUSH_BASE/software/build/lib:$CPUSH_BASE/software/build/lib64:$LD_LIBRARY_PATH
-  export LD_LIBRARY_PATH=$HOME/software/gurobi651/linux64/lib:$LD_LIBRARY_PATH  # for gurobi
+  export LD_LIBRARY_PATH=$HOME/software/gurobi701/linux64/lib:$LD_LIBRARY_PATH  # for gurobi
   
   export CLASSPATH=$CLASSPATH:/usr/local/share/java/lcm.jar:$CPUSH_BASE/software/build/share/java/lcmtypes_cpush_lcmtypes.jar
   export CLASSPATH=$CLASSPATH:$CPUSH_BASE/software/build/share/java/drake.jar:$CPUSH_BASE/software/build/share/java/bot2-lcmgl.jar
   export PKG_CONFIG_PATH=$CPUSH_BASE/software/build/lib/pkgconfig:$CPUSH_BASE/software/build/lib64/pkgconfig:$PKG_CONFIG_PATH
-  export GRB_LICENSE_FILE=$HOME/software/gurobi651/gurobi.lic
+  export GRB_LICENSE_FILE=$HOME/software/gurobi701/gurobi.lic
 
   # python path
   export PYTHONPATH=$PYTHONPATH:$CPUSH_BASE/software/build/lib/python2.7/site-packages:$CPUSH_BASE/software/build/lib/python2.7/dist-packages
