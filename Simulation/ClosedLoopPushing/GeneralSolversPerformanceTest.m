@@ -52,8 +52,8 @@ d = 0.5 * QSPusherSlider.b/2.0;
 % px = QSPusherSlider.a / 2.0;
 % A = u_thrust / (c^2 + px^2 + d^2);
 % x_star = @(t)([-(sin(-(d*A).*t) * (c^2 + px^2) + cos(-(d*A) .* t) * px*d - px*d) / d; (cos(-(d*A).*t) * (c^2 + px^2) - sin(-(d*A).* t) * px*d - c^2 - px^2) / d; -(d*A) .* t; d * ones(size(t))]); % For the circle
-% x0 = [0, .05, 30 * pi / 180, 0]; % For the straight line
-x0 = [0, 0.01, 0, d]; % For the circle
+x0 = [0, .05, 30 * pi / 180, 0]; % For the straight line
+% x0 = [0, 0.01, 0, d]; % For the circle
 %% Animation Parameters
 animator = Animation.Animator(QSPusherSlider());
 path_name = 'SimulationResults/GeneralSolversPerformanceTest';
