@@ -30,10 +30,10 @@
 *.mp3
 
 # Simulation ignore
-Simulation/ClosedLoopPushing/img
-Simulation/ClosedLoopPushing/vid
-Simulation/ClosedLoopPushing/Results
-Simulation/ClosedLoopPushing/SimulationResults
+Simulation/ClosedLoopPushing/img/
+Simulation/ClosedLoopPushing/vid/
+Simulation/ClosedLoopPushing/SimulationResults/
+Simulation/ClosedLoopPushing/Results/
 
 # Catkin ignore
 catkin_ws/build
