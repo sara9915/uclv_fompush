@@ -26,34 +26,36 @@ Q_MPC_final = 200 * diag([1,1,.1,0]); % 200 * diag([.1,10,1,0]);
 R_MPC = .5 * diag([1,1]);
 u_lower_bound = [-0.01; 0.1];
 u_upper_bound = [0.1; 0.1];
-% x_lower_bound = [1; 1; 20; 100];
-% x_upper_bound = [1; 1; 20; 100];
 x_lower_bound = [1; 1; 20; QSPusherSlider.a];
 x_upper_bound = [1; 1; 20; QSPusherSlider.a];
 h_opt = 0.03;
-solvers{1, 1} = FOMSolver(hybrid_states_map, Q_MPC, Q_MPC_final, R_MPC, u_lower_bound, u_upper_bound, x_lower_bound, x_upper_bound, h_opt, hybrid_modes, 0); % FOM without chameleon
-solvers{1, 2} = FOMSolver(hybrid_states_map, Q_MPC, Q_MPC_final, R_MPC, u_lower_bound, u_upper_bound, x_lower_bound, x_upper_bound, h_opt, hybrid_modes, 1); % FOM with chameleon
-%% Euler Integration Parameters and Setup
-h_step = 0.01;
-euler_integrator = EulerIntegration(real_states_map, h_step);
+solver = FOMSolver(hybrid_states_map, Q_MPC, Q_MPC_final, R_MPC, u_lower_bound, u_upper_bound, x_lower_bound, x_upper_bound, h_opt, hybrid_modes, 0); % FOM without chameleon
 %% Solve MPC and Integrate
-t0 = 0;
-tf = h_step;
+tf = fom_steps * h_opt; % We only take one step of the Euler integration
 u_thrust = 0.05;
-u_star = @(t)([u_thrust * ones(size(t)); 0 .*t]); % To ensure it can be substituted by a vector
+u_star = @(t)([u_thrust * ones(size(t)); 0 .*t]);
 x_star = @(t)([u_thrust .* t; 0.*t; 0.*t; 0.*t]); % For the straight line
-% d = 0.5 * QSPusherSlider.b/2.0;
-% c = QSPusherSlider.c;
-% px = QSPusherSlider.a / 2.0;
-% A = u_thrust / (c^2 + px^2 + d^2);
-% x_star = @(t)([-(sin(-(d*A).*t) * (c^2 + px^2) + cos(-(d*A) .* t) * px*d - px*d) / d; (cos(-(d*A).*t) * (c^2 + px^2) - sin(-(d*A).* t) * px*d - c^2 - px^2) / d; -(d*A) .* t; d * ones(size(t))]); % For the circle
-% x0 = [0, .05, 30 * pi / 180, 0]; % For the straight line
-% x0 = [0, 0.05, 0, 0]; % For the circle
-x0 = [(rand(1000,2) - 0.5) * 1, rand(1000,1) * pi, (rand(1000,1) - 0.5) * QSPusherSlider.a];
+eps = 0.5; % TODO: Automatically generate it
+% eps = 0.1 * tf * u_thrust; % 10% of the path if it were a straight line
+angular_eps = pi / 4; % 45% in each direction. Otherwise we choose another side
+sim_number = 1000; % Number of simulations
+n_rand = @(n, m, eps)((rand(n, m) - 0.5) * eps);
+x0 = [n_rand(sim_number, 2, 2 * eps), n_rand(sim_number, 1, 2 * angular_eps), n_rand(sim_number, 1, QSPusherSlider.a)].';
 path_name = 'SimulationResults/TestFOMStructure';
 if  exist(path_name, 'dir') ~= 7
     mkdir(pwd, path_name);
 end
-for i = 1:length(solvers)
-    [x_state, u_state, x_bar, u_bar, t, modes, costs] = euler_integrator.IntegrateMPC(t0, tf, x0, x_star, u_star, solvers{i});
+% fileID = fopen(strcat(path_name, '/cost_data_', sim_number, '.csv'));
+for i = 1:sim_number
+    disp(i)
+    for j = 1:size(hybrid_modes, 1)
+        op = solver.GetOptimizationProblem(0, x_star, u_star, x0(:,i), hybrid_modes(j, :));
+        [~, ~, cost] = op.solve;
+        if (~exist('data', 'var'))
+            data = [i, j, cost];
+        else
+            data = [data; i, j, cost];
+        end
+    end
 end
+csvwrite(strcat(path_name, '/cost_data_', int2str(sim_number), '.csv'), data);
