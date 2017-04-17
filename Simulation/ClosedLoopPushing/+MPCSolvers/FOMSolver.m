@@ -95,11 +95,6 @@ function [optimization_problem] = GetOptimizationProblem(obj, t0, x_star, u_star
         H = zeros(optimization_problem.nv, optimization_problem.nv);
         H(optimization_problem.vars.x.i(1:length(obj.Q_MPC), step_index), optimization_problem.vars.x.i(1:length(obj.Q_MPC), step_index)) = obj.Q_MPC;
         H(optimization_problem.vars.u.i(1:length(obj.R_MPC), step_index), optimization_problem.vars.u.i(1:length(obj.R_MPC), step_index)) = obj.R_MPC;
-        %Final Cost
-        if step_index == number_of_steps
-            H(optimization_problem.vars.x.i(1:length(obj.Q_MPC_final), step_index), optimization_problem.vars.x.i(1:length(obj.Q_MPC_final), step_index)) = obj.Q_MPC + obj.Q_MPC_final;
-        end
-        optimization_problem = optimization_problem.addCost(H, [], []);
         A_motion = zeros(obj.number_of_variables, optimization_problem.nv);
         A_motion(:,optimization_problem.vars.x.i(1:obj.number_of_variables, step_index)) = eye(obj.number_of_variables);
         % TODO: Should add constraint to bound the first value to it's
@@ -139,6 +134,11 @@ function [optimization_problem] = GetOptimizationProblem(obj, t0, x_star, u_star
             A_constraint = zeros(number_of_motion_cone_constraints, optimization_problem.nv);
             A_constraint(:, optimization_problem.vars.x.i(1:obj.number_of_variables, step_index)) = E;
         end
+        %Final Cost
+        if step_index == number_of_steps
+            H(optimization_problem.vars.x.i(1:length(obj.Q_MPC_final), step_index), optimization_problem.vars.x.i(1:length(obj.Q_MPC_final), step_index)) = 10 * dare(A, B, obj.Q_MPC, obj.R_MPC);
+        end
+        optimization_problem = optimization_problem.addCost(H, [], []);
         A_constraint(:, optimization_problem.vars.u.i(1:obj.number_of_controllers, step_index)) = D;
         b_constraint = g;
         optimization_problem = optimization_problem.addLinearConstraints(A_constraint, b_constraint, A_motion, b_motion);
