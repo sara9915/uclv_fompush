@@ -1,6 +1,4 @@
 function [ result ] = VariationWithRepetition(n, m)
-%VARIATIONWITHREPETITION Summary of this function goes here
-%   Detailed explanation goes here
     result = PrivateVariationWithRepetition(n, m, 1, zeros(1, m));
 end
 
