@@ -34,6 +34,8 @@ Simulation/ClosedLoopPushing/img/
 Simulation/ClosedLoopPushing/vid/
 Simulation/ClosedLoopPushing/SimulationResults/
 Simulation/ClosedLoopPushing/Results/
+Simulation/ClosedLoopPushing/.RData
+Simulation/ClosedLoopPushing/.Rhistory
 
 # Catkin ignore
 catkin_ws/build
