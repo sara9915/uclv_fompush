@@ -30,7 +30,7 @@ methods
              obj.rx * obj.x(4) c2 + obj.x(4)^2] ./ (c2 + obj.rx2 + obj.x(4)^2);
         P = [1 0; obj.gamma_top 0];
         b = [(-obj.x(4) + obj.gamma_top * obj.rx) / (c2 + obj.rx2 + obj.x(4)^2) 0];
-        c = [-obj.gamma_top 1];
+        c = [0 1];
         %Build nonlinear function
         obj.controller_matrix = [Cbi.' * Q * P; b; c];
         obj.motion_function = obj.controller_matrix * obj.u.';
