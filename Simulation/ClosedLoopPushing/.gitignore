@@ -44,6 +44,9 @@ octave-workspace
 #.m debug
 comparison.m
 comparison_robot.m
+my_main.m
+plot_my_main.m
+test_mpc.m
 
 #.sh 
 
