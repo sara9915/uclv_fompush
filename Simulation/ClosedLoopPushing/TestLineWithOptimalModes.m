@@ -3,7 +3,7 @@ clear all;
 close all;
 clc;
 %% Setup
-run('Setup.m');
+%run('Setup.m');
 import Models.QSPusherSlider
 import MPCSolvers.FOMSolver
 import MPCSolvers.MIQPSolver

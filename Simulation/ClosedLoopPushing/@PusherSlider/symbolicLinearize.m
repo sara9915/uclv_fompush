@@ -9,7 +9,7 @@ function obj = symbolicLinearize(obj)
     %Kinematics
     Cbi = Helper.C3_2d(theta);
     rx = -obj.a/2;
-    rbpb = [rx;ry];
+    rbpb = [rx;ry]; % r pusher in body frame
     %% Stick: vo = vp, Slide Up: vo = vo_up, Slide Down: vo = vo_down
     %Define gamma=vt/vn
     gamma_top    = (obj.nu_p*obj.c^2 - rx*ry + obj.nu_p*rx^2)/(obj.c^2 + ry^2 - obj.nu_p*rx*ry);
@@ -59,8 +59,11 @@ function obj = symbolicLinearize(obj)
         % Substitute equilibrium states
         A{lv1} = subs(A{lv1},{x,y,theta ry},{obj.x_eq(1),obj.x_eq(2),obj.x_eq(3), obj.ry_star});
         A{lv1} = subs(A{lv1},{u1,u2},{obj.u_star(1),obj.u_star(2)});
+        
+        % BREAKPOINT FOR CPP MATRICES 
         B{lv1} = subs(B{lv1},{x,y,theta ry},{obj.x_eq(1),obj.x_eq(2),obj.x_eq(3), obj.ry_star});
         B{lv1} = subs(B{lv1},{u1,u2},{obj.u_star(1),obj.u_star(2)});
+        
         %Convert to double type
         A{lv1}=double(A{lv1});
         B{lv1}=double(B{lv1});

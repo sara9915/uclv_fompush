@@ -20,19 +20,19 @@ function vo = MotionCone(obj,rbbi, rbpi, vbpi)
         vMC = [1;gamma_top];
         kappa = (vbpi(1))/(vMC(1));
         vo = kappa*vMC;
-        disp('Sliding Up');
+%         disp('Sliding Up');
     elseif gamma<gamma_bottom
         vMC = [1;gamma_bottom];
         kappa = (vbpi(1))/(vMC(1));
         vo = kappa*vMC;
-        disp('Sliding Down');
+%         disp('Sliding Down');
     else
         vo = vbpi;
-        disp('Sticking');
+%         disp('Sticking');
     end
     if vo(1)<=0 %|| abs(ry)>obj.b/2
-        error('Not in contact');
-%         vo=[0;0];
+%         error('Not in contact');
+         vo=[0.001;vo(2)];
 %          disp('not in contact');
     end
 end

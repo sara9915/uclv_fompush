@@ -3,7 +3,7 @@ clear variables; % Clear all is bad for performance
 close all;
 clc;
 % Setup
-run('Setup.m');
+%run('Setup.m');
 
 %% Simulation Parameters
 t0 = 0;

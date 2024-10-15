@@ -1,5 +1,5 @@
 %% Build Constraint Matrices (FOM)
-function obj = ConstraintMatricesFOM(obj)
+function obj = ConstraintMatricesFOMdelayed(obj)
     %json parameters for saving matrices
     load_json = true;
     filename_json = 'Matrices_1.json';
@@ -22,14 +22,19 @@ function obj = ConstraintMatricesFOM(obj)
         FOM{Family} = MixedIntegerConvexProgram(false);
 %         u_lower_bound = [(-obj.u_star(1) + obj.u_lower_bound(1)) * ones(1, obj.steps); (-obj.u_star(2) - obj.u_lower_bound(2)) * ones(1, obj.steps)]; % TODO: Change for complex trajectories and include as member of something
 %         u_upper_bound = [(-obj.u_star(1) + obj.u_upper_bound(1)) * ones(1, obj.steps); (-obj.u_star(2) + obj.u_upper_bound(2)) * ones(1, obj.steps)]; % TODO: Change for complex trajectories and include as member of something
-        u_lower_bound = [(-obj.u_star(1) + 0.001) * ones(1, obj.steps); (-obj.u_star(2) - 0.05) * ones(1, obj.steps)]; % TODO: Change for complex trajectories and include as member of something
-        u_upper_bound = [(-obj.u_star(1) + 0.03) * ones(1, obj.steps); (-obj.u_star(2) + 0.05) * ones(1, obj.steps)];%[(-obj.u_star(1) + 2*obj.u_star(1)) * ones(1, obj.steps); (-obj.u_star(2) + 0.05+obj.u_star(1)) * ones(1, obj.steps)]; % TODO: Change for complex trajectories and include as member of something        
-        x_lower_bound = [-100 * ones(3, obj.steps); -0.75 * obj.b / 2 * ones(1, obj.steps)];
-        x_upper_bound = [100 * ones(3, obj.steps); 0.75 * obj.b / 2 * ones(1, obj.steps)];
-        
+        u_lower_bound = [(-obj.u_star(1) + 0.001) * ones(1, obj.steps); (-obj.u_star(2) - 0.02) * ones(1, obj.steps)]; % TODO: Change for complex trajectories and include as member of something
+        u_upper_bound = [(-obj.u_star(1) + 0.02) * ones(1, obj.steps); (-obj.u_star(2) + 0.02) * ones(1, obj.steps)]; % TODO: Change for complex trajectories and include as member of something        
+        x_lower_bound = [-100 * ones(3, obj.steps); -1 * obj.b / 2 * ones(1, obj.steps)];
+        x_upper_bound = [100 * ones(3, obj.steps); 1 * obj.b / 2 * ones(1, obj.steps)];
+%         delta_u_lower_bound = [-0.1 * ones(1, obj.steps); -0.1 * ones(1, obj.steps)]; % TODO: Change for complex trajectories and include as member of something
+%         delta_u_upper_bound = [0.1 * ones(1, obj.steps);  0.1 * ones(1, obj.steps)]; 
+        d_lower_bound = -100 * ones(obj.num_delayed, obj.steps);
+        d_upper_bound = 100 * ones(obj.num_delayed, obj.steps);
+    
         FOM{Family} = FOM{Family}.addVariable('u', 'C', [obj.num_inputs, obj.steps], u_lower_bound, u_upper_bound);
         FOM{Family} = FOM{Family}.addVariable('x', 'C', [obj.num_vars, obj.steps], x_lower_bound, x_upper_bound);
-%         FOM{Family} = FOM{Family}.addVariable('delta_u', 'C', [obj.num_inputs, obj.steps], delta_u_lower_bound, delta_u_upper_bound);
+        FOM{Family} = FOM{Family}.addVariable('d', 'C', [obj.num_delayed, obj.steps], d_lower_bound, d_upper_bound);
+%       FOM{Family} = FOM{Family}.addVariable('delta_u', 'C', [obj.num_inputs, obj.steps], delta_u_lower_bound, delta_u_upper_bound);
         
         %Loop through steps of opt. program
         % TODO: Change name so it's not misleading anymore
@@ -65,7 +70,7 @@ function obj = ConstraintMatricesFOM(obj)
             end
             %% Cost - DEFINE QUADRATIC COST FUNCTION 
             H = zeros(FOM{Family}.nv, FOM{Family}.nv);
-            c = zeros(FOM{Family}.nv, 1);
+%             c = zeros(FOM{Family}.nv, 1);
             % Assign cost block matrices
             if lv1 < obj.steps
                 H(FOM{Family}.vars.x.i(1:length(obj.Q_MPC),lv1), FOM{Family}.vars.x.i(1:length(obj.Q_MPC),lv1)) = zeros(length(obj.Q_MPC));
@@ -91,27 +96,37 @@ function obj = ConstraintMatricesFOM(obj)
             
             %% Dynamic Constraints - EQUALITY CONSTRAINTS FOR DYNAMICS
             Ain = zeros(obj.num_vars, FOM{Family}.nv);
-%             Duin = zeros(obj.num_inputs, FOM{Family}.nv); %delta_u equality constraints
+            Duin = zeros(obj.num_delayed, FOM{Family}.nv); %delta_u equality constraints
+            
             if lv1 ==1
             else
                 Ain(:,FOM{Family}.vars.x.i(1:obj.num_vars,lv1-1))= -obj.A_bar{counter};
                 Ain(:,FOM{Family}.vars.x.i(1:obj.num_vars,lv1))  = eye(obj.num_vars);
-                Ain(:,FOM{Family}.vars.u.i(1:obj.num_inputs,lv1))=  -obj.B_bar{counter};
-                
-%                 Duin(:,FOM{Family}.vars.u.i(1:obj.num_inputs,lv1-1)) = -eye(2);
-%                 Duin(:,FOM{Family}.vars.u.i(1:obj.num_inputs,lv1)) = -eye(2);
-%                 Duin(:,FOM{Family}.vars.delta_u.i(1:obj.num_inputs,lv1)) = eye(2);
-                
+                Ain(:,FOM{Family}.vars.d.i(obj.num_delayed-1:obj.num_delayed,lv1))=  -obj.B_bar{counter};
                 bin = ones(obj.num_vars,1)*M*(1-z(counter));
                 FOM{Family} = FOM{Family}.addLinearConstraints([], [], Ain, bin);
-%                 FOM{Family} = FOM{Family}.addLinearConstraints([], [], Duin, zeros(2,1));
+                
+                %delay constraints
+%                 P_tmp = zeros(obj.num_delayed,obj.num_delayed);
+%                 j = 1;
+%                 for i=3:2:obj.num_delayed
+%                    P_tmp([i i+1],j) = 1;
+%                    j = j+1;
+%                 end
+                P_tmp = [zeros(2,obj.num_delayed); eye(obj.num_delayed-2,obj.num_delayed)];
+                
+                Duin(:,FOM{Family}.vars.d.i(1:obj.num_delayed,lv1-1)) = -P_tmp;
+                Duin(:,FOM{Family}.vars.d.i(1:obj.num_delayed,lv1)) = eye(obj.num_delayed);
+                Duin(1:2,FOM{Family}.vars.u.i(1:obj.num_inputs,lv1)) = -eye(obj.num_inputs);
+                b_duin = zeros(obj.num_delayed,1);
+                FOM{Family} = FOM{Family}.addLinearConstraints([], [], Duin,  b_duin);
                 
                 if(load_json)
                      A_json = [A_json;Ain;-Ain]; 
                      B_json = [B_json;bin;bin];
                 end
                
-                clear Ain bin Duin
+                clear Ain bin Duin P_tmp
                 %% Motion Cone Constraint - INEQUALITY CONSTRAINTS
                 epsilon = 0.005;
                 NconstMC = 1; % TODO: Seems off, it's used in other ifs without initialization, so I moved out of the if/else
@@ -122,7 +137,8 @@ function obj = ConstraintMatricesFOM(obj)
                     E = -obj.C_top_linear*obj.u_star(1);
                     bin = M*(1-z(1))-obj.u_star(2) + obj.gammaTop_star*obj.u_star(1);
                     Ain(:,FOM{Family}.vars.x.i(1:obj.num_vars,lv1)) = E;
-                    Ain(:,FOM{Family}.vars.u.i(1:2,lv1)) = D;
+                    Ain(:,FOM{Family}.vars.d.i(obj.num_delayed-1:obj.num_delayed,lv1)) = D;
+                    
                     FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);
                     
                     if(load_json)
@@ -148,7 +164,7 @@ function obj = ConstraintMatricesFOM(obj)
                     bin = M*(1-z(3))-obj.u_star(2) + obj.gammaBottom_star*obj.u_star(1)-epsilon;
                 end
                 Ain(:,FOM{Family}.vars.x.i(1:obj.num_vars,lv1)) = E;
-                Ain(:,FOM{Family}.vars.u.i(1:2,lv1)) = D;
+                Ain(:,FOM{Family}.vars.d.i(obj.num_delayed-1:obj.num_delayed,lv1)) = D;
                 FOM{Family} = FOM{Family}.addLinearConstraints(Ain, bin, [], []);
                 
                 if(load_json)
