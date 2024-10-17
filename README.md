@@ -5,18 +5,27 @@
 This workspace extends the work of [Hogan et al.]() on the design of a Linear Model Predictive Control to perform _pushing_ manouvre under the quasi-static assumption in the Matlab environment through the [Gurobi optimizer](https://www.gurobi.com/).
 
 ## Content
-- [Installaion](#installation)
+- [Requirements](#requirements)
 - [Usage](#usage)
-- [Organization](#organization)
 
-## Installation
-⚠️ **Software compatibility:** 
+## Requirements 
+- The code has been tested on **Matlab2018b** (later Matlab versions should be compatible).  
 
-## Organization
-The code is implementend through the object-oriented programming approach. The key components of the workspace are the following.
- 
+- A **[Gurobi license](https://www.gurobi.com/lp/all/licensing/?utm_source=google&utm_medium=cpc&utm_campaign=2024+na+googleads+request+an+evaluation+license&utm_content=sitelink&campaignid=2027425882&adgroupid=165853131800&creative=702008510760&keyword=gurobi&matchtype=e&_bn=g&gad_source=1&gclid=CjwKCAjw68K4BhAuEiwAylp3koorjOq2qhMndKnlt_b7mGOAtaExZhydcgB1ZZs6827DQq9xLDWXihoCc34QAvD_BwE)** is required to solve the optimization problem set up with the MPC.
+
+- The project uses several external libraries, which are included as submodules (see software/externals, or git submodules).
+
 
 ## Usage
+Clone the repository and initialize submodules:  
+```
+git clone https://github.com/sara9915/uclv_fompush.git
+cd uclv_fompush 
+git submodule update --init --recursive
+```
+
+Just set parameters of your slider in **`Simulation/ClosedLoopPushing/@PusherSlider/PusherSlider.m`** and set up the reference trajectory in **`Simulation/ClosedLoopPushing/@PusherSlider/errorVector.m`** 
+
 
 
 ## How to cite us
